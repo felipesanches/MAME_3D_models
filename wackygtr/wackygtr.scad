@@ -17,7 +17,39 @@
  *         <http://mamedev.emulab.it/fsanches/>
  */
 
-//include <wackygtr_states.h>;
+render_glass = false;
+render_blue_metal = false;
+render_clear_wood = false;
+render_dark_wood = false;
+render_separators = false;
+render_alligator = false;
+
+module material(name){
+    if (name=="glass" && render_glass)
+        color([0.7, 0.7, 0.7, 0.7])
+        child(0);
+
+    if (name=="blue metal" && render_blue_metal)
+        color([0.3, 0.3, 0.6])
+        child(0);
+
+    if (name=="clear wood" && render_clear_wood)
+        color([0.9, 0.8, 0.6])
+        child(0);
+
+    if (name=="dark wood" && render_dark_wood)
+        color([0.3, 0.3, 0.3])
+        child(0);
+
+    if (name=="separators" && render_separators)
+        color([211/255, 164/255, 65/255])
+        child(0);
+
+    if (name=="alligator" && render_alligator)
+        color([136/255, 179/255, 101/255])
+        child(0);
+}
+
 inches = 25.4;
 glass_thickness = 2;
 wood_thickness = 20;
@@ -31,6 +63,8 @@ bottom_bevel = bottom_depth/5;
 head_depth = 400;
 head_width = 38 * inches;
 head_height = total_height - bottom_height;
+
+
 
 module wacky_gator(){
 	body();
@@ -47,23 +81,23 @@ module sidewall_2d(){
 }
 
 module sidewall(){
-	color([0.3, 0.3, 0.3])
+	material("dark wood")
 	rotate([90,0,0])
 	linear_extrude(height=wood_thickness) sidewall_2d();
 }
 
 module bottom_box(){
-	color([0.3, 0.3, 0.6])
+	material("blue metal")
 	translate([bottom_depth - wood_thickness/2 - 80,0,2])
 	cube([80, bottom_width, bottom_height - bottom_bevel]);
 
-	color([0.9, 0.8, 0.6])
+	material("clear wood")
 	translate([0,0,bottom_height - bottom_bevel])
 	cube([bottom_depth - 80, bottom_width, 1]);
 }
 
 module cover_wood(){
-	color([0.9, 0.8, 0.6])
+	material("clear wood")
 	linear_extrude(height=wood_thickness){
 		difference(){
 			translate([0, -bottom_width/2,0])
@@ -75,7 +109,7 @@ module cover_wood(){
 	}
 
 	//screws:
-	color([0.3, 0.3, 0.3])
+	material("dark wood")
 	for (i=[0,1]){
 		for (j=[-1,1]){
 			translate([40 + i*head_depth,j*((bottom_width + head_width + 2 * wood_thickness)/4), wood_thickness])
@@ -97,7 +131,7 @@ module door_hole(){
 }
 
 module doors(h=80){
-	color([0.9, 0.8, 0.6])
+	material("clear wood")
 	difference(){
 		linear_extrude(height=h){
 			intersection(){
@@ -173,7 +207,7 @@ skew = [ [ 1,  0, -0.4,  0 ],
          [ 0,  0,    0,  1 ] ]; 
 
 module wall(h=40, l=160){
-	color([211/255, 164/255, 65/255])
+	material("separators")
 	intersection(){
 		union(){
 			multmatrix(skew)
@@ -209,7 +243,7 @@ module rounded_block(x, y, z, r=20){
 }
 
 module alligator(){
-	color([136/255, 179/255, 101/255])
+	material("alligator")
 	translate([0,-25, 20])
 	rounded_block(200, 50,30);
 }
@@ -225,24 +259,24 @@ module head_sidepanel_2d(){
 }
 
 module head_sidepanel(){
-	color([0.3, 0.3, 0.3])
+	material("dark wood")
 	rotate([90,0])
 	linear_extrude(height=wood_thickness)
 	head_sidepanel_2d();
 }
 
 module top_wood(){
-	color([0.3, 0.3, 0.3])
+	material("dark wood")
 	cube([head_depth - wood_thickness, head_width, wood_thickness]);
 }
 
 module back_glass(){
-	color([0.3, 0.3, 0.8, 0.7])
+	material("glass")
 	cube([ glass_thickness, head_width, head_height - head_bevel - 2*wood_thickness]);
 }
 
 module marquee(){
-	color([0.3, 0.8, 0.3, 0.7])
+	material("glass")
 	cube([ glass_thickness, head_width, head_bevel*sqrt(2) ]);
 }
 
