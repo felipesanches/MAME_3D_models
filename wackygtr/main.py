@@ -21,7 +21,7 @@ import colorsys
 def clamp(i, mn=0, mx=1):
     return min(max(i, mn), mx)
 
-class GalaxyForce(ShowBase):
+class Arcade(ShowBase):
 
     def __init__(self):
         # Initialize the ShowBase class from which we inherit, which will
@@ -30,7 +30,7 @@ class GalaxyForce(ShowBase):
 
         # The main initialization of our class
         # This creates the on screen title that is in every tutorial
-        self.title = OnscreenText(text="Galaxy Force II Super Deluxe",
+        self.title = OnscreenText(text="Wacky Gator",
                                   style=1, fg=(1, 1, 0, 1), shadow=(0, 0, 0, 0.5),
                                   pos=(0.87, -0.95), scale = .07)
 
@@ -61,42 +61,60 @@ class GalaxyForce(ShowBase):
         dlens.setNearFar(50, 75)
         # self.directionalLight.node().showFrustum()
         
-        self.glass = loader.loadModel('egg/gforce2_glass')
+        self.glass = loader.loadModel('egg/wackygtr_glass')
         self.glass.setColor((0.7, 0.7, 0.7, 0.7))
         self.glass.setPos(0, 0, 0)
         self.glass.setScale(.005)
 
-        self.shinny_metal = loader.loadModel('egg/gforce2_shinny_metal')
-        self.shinny_metal.setColor((0.6, 0.6, 0.6, 1))
-        self.shinny_metal.setPos(0, 0, 0)
-        self.shinny_metal.setScale(.005)
+        self.blue_metal = loader.loadModel('egg/wackygtr_blue_metal')
+        self.blue_metal.setColor((0.3, 0.3, 0.6, 1))
+        self.blue_metal.setPos(0, 0, 0)
+        self.blue_metal.setScale(.005)
 
         metalic = Material()
         metalic.setShininess(20.0)
         metalic.setSpecular((0.6, 0.6, 0.9, 1))
 #        metalic.setAmbient((0.7, 0.7, 0.7, 1))
-        self.shinny_metal.setMaterial(metalic)
+        self.blue_metal.setMaterial(metalic)
 
-        self.black_metal = loader.loadModel('egg/gforce2_dark_black_metal.egg')
-        self.black_metal.setColor((0.3, 0.3, 0.35, 1))
-        self.black_metal.setPos(0, 0, 0)
-        self.black_metal.setScale(.005)
+        self.clear_wood = loader.loadModel('egg/wackygtr_clear_wood.egg')
+        self.clear_wood.setColor((0.9, 0.8, 0.6, 1))
+        self.clear_wood.setPos(0, 0, 0)
+        self.clear_wood.setScale(.005)
+        
+        self.dark_wood = loader.loadModel('egg/wackygtr_dark_wood.egg')
+        self.dark_wood.setColor((0.9, 0.8, 0.6, 1))
+        self.dark_wood.setPos(0, 0, 0)
+        self.dark_wood.setScale(.005)
+        
+        self.separators = loader.loadModel('egg/wackygtr_separators.egg')
+        self.separators.setColor((0.9, 0.8, 0.6, 1))
+        self.separators.setPos(0, 0, 0)
+        self.separators.setScale(.005)
+        
+        self.alligator = loader.loadModel('egg/wackygtr_alligator.egg')
+        self.alligator.setColor((0.9, 0.8, 0.6, 1))
+        self.alligator.setPos(0, 0, 0)
+        self.alligator.setScale(.005)
 
         # The blue point light
         # Point lights are lights that radiate from a single point, like a light bulb.
         # Like spotlights, they are given position by attaching them to NodePaths in the world
-        self.bluePointLight = self.black_metal.attachNewNode(
+        self.bluePointLight = self.glass.attachNewNode(
             PointLight("bluePointLight"))
         self.bluePointLight.node().setAttenuation(LVector3(.1, 0.04, 0.0))
-        self.bluePointLight.node().setColor((0, 0, .35, 1))
+        self.bluePointLight.node().setColor((0.35, 0.35, .35, 1))
         self.bluePointLight.node().setSpecularColor((1, 1, 1, 1))
 
-        self.spaceship = render.attachNewNode("spaceShip")
-        self.spaceship.setPosHpr(0, 60, -10, 0, -90, 0)
+        self.machine = render.attachNewNode("machine")
+        self.machine.setPosHpr(0, 60, -10, -90 -30, -90, 0)
 
-        self.glass.reparentTo(self.spaceship)
-        self.shinny_metal.reparentTo(self.spaceship)
-        self.black_metal.reparentTo(self.spaceship)
+        self.glass.reparentTo(self.machine)
+        self.blue_metal.reparentTo(self.machine)
+        self.clear_wood.reparentTo(self.machine)
+        self.dark_wood.reparentTo(self.machine)
+        self.separators.reparentTo(self.machine)
+        self.alligator.reparentTo(self.machine)
 
         # Finally we store the light on the root of the scene graph.
         # This will cause them to affect everything in the scene.
@@ -119,10 +137,10 @@ class GalaxyForce(ShowBase):
         self.accept("x", self.addBrightness, [self.ambientLight, .05])
         self.accept("c", self.addBrightness, [self.directionalLight, -.05])
         self.accept("v", self.addBrightness, [self.directionalLight, .05])
-        self.accept("h", self.rotateShip, [self.spaceship, 5])
-        self.accept("g", self.rotateShip, [self.spaceship, -5])
+        self.accept("h", self.rotateMachine, [self.machine, 5])
+        self.accept("g", self.rotateMachine, [self.machine, -5])
 
-    def rotateShip(self, part, angle):
+    def rotateMachine(self, part, angle):
         part.setH(angle + part.getH())
 
     # This function takes a list of lights and toggles their state. It takes in a
@@ -180,5 +198,5 @@ class GalaxyForce(ShowBase):
 
 
 # Make an instance of our class and run the demo
-demo = GalaxyForce()
+demo = Arcade()
 demo.run()
