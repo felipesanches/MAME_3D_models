@@ -10,7 +10,7 @@ MATERIALS = egg/gforce2_glass.egg \
 all: $(MATERIALS)
 
 stl/gforce2_%.stl: gforce2.scad
-	openscad $< -D render_$*=true -o $@
+	openscad $< -D render_$*=true -D render_all=false -o $@
 
 egg/gforce2_%.egg: stl/gforce2_%.stl
 	python $(STL2EGG) $< $@

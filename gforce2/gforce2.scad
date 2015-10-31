@@ -1,8 +1,8 @@
-//render_all = true;
+arc_detail_level = 40;
+render_all = true;
 render_glass = false;
 render_dark_black_metal = false;
 render_shinny_metal = false;
-
 render_static_shinny_metal = false;
 render_static_golden = false;
 render_static_red = false;
@@ -232,20 +232,28 @@ module CRT_glass(inches){
 	}
 }
 
-module arc(r, R, start=0, end=360){
-	N = 50;
-	PI = 3.1415;
-	for (i=[0:N-1]){
-		hull(){
-			rotate([0,-(start + i*(end-start)/N)])
-			translate([R,0])
-			cylinder(r=r, h=0.1);
-
-			rotate([0,-(start + (i+1)*(end-start)/N)])
-			translate([R,0])
-			cylinder(r=r, h=0.1);
-		}
+module pie_slice(radius, angle, step) {
+	for(theta = [0:step:angle-step]) {
+		linear_extrude(height = radius*2, center=true)
+		polygon(points = [[0,0], [radius * cos(theta+step), radius * sin(theta+step)], [radius * cos(theta), radius * sin(theta)]]);
 	}
+}
+
+module partial_rotate_extrude(radius, start, end) {
+	intersection () {
+		rotate_extrude($fn=arc_detail_level)
+		translate([radius,0,0])
+		child(0);
+
+		rotate(start)
+		pie_slice(radius*2, end-start, (end-start)/8);
+	}
+}
+
+module arc(r, R, start=0, end=360){
+	rotate([90,0])
+	partial_rotate_extrude(R, start, end)
+	circle(r=r);
 }
 
 module arc_cut(r, R, angles, length=20, depth=10){
