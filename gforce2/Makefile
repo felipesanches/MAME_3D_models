@@ -2,7 +2,10 @@ STL2EGG = ../tools/stl2egg.py
 
 MATERIALS = egg/gforce2_glass.egg \
             egg/gforce2_dark_black_metal.egg \
-            egg/gforce2_shinny_metal.egg
+            egg/gforce2_shinny_metal.egg \
+            egg/gforce2_static_shinny_metal.egg \
+            egg/gforce2_static_red.egg \
+            egg/gforce2_static_golden.egg
 
 all: $(MATERIALS)
 

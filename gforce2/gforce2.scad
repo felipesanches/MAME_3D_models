@@ -1,34 +1,176 @@
+//render_all = true;
 render_glass = false;
 render_dark_black_metal = false;
 render_shinny_metal = false;
 
+render_static_shinny_metal = false;
+render_static_golden = false;
+render_static_red = false;
+
 R = 1500; //guessed
 base_thickness = 400; //guessed
+base_elevation = R*0.3;
 
 module gforce2_super_deluxe(){
-	sdeluxe_base();
-	borders();
-	CRT();
-	front_arcs();
-	back_arcs();
-	handrail_arc();
-	seat();
-	joystick();
-	coinbox();
+	security_stands();
+	stand_strings();
+	legs();
+	golden_center();
+
+	rotate(360*$t)
+	translate([0,0,base_elevation]){
+		sdeluxe_base();
+		borders();
+		speakers();
+		cpu_box();
+		front_arcs();
+		back_arcs();
+		handrail_arc();
+		seat();
+		joystick_panel();
+		gear();
+		pedals();
+		coinbox();
+		CRT();
+	}
 }
 
 module material(name){
-	if (name=="glass" && render_glass)
-		color([0.7, 0.7, 0.7, 0.7])
+	if (name=="glass" && (render_glass || render_all))
+		color([0.3, 0.3, 0.3, 0.7])
 		child(0);
 
-	if (name=="dark black metal" && render_dark_black_metal)
+	if (name=="dark black metal" && (render_dark_black_metal || render_all))
 		color([0.3, 0.3, 0.35])
 		child(0);
 
-	if (name=="shinny metal" && render_shinny_metal)
+	if (name=="shinny metal" && (render_shinny_metal || render_all))
 		color([0.8, 0.8, 0.8])
 		child(0);
+
+	if (name=="static shinny metal" && (render_static_shinny_metal || render_all))
+		color([0.8, 0.8, 0.8])
+		child(0);
+
+	if (name=="static red" && (render_static_red|| render_all))
+		color([0.8, 0, 0])
+		child(0);
+
+	if (name=="static golden" && (render_static_golden || render_all))
+		color([0.8, 0.5, 0.2])
+		child(0);
+}
+
+module golden_center(){
+	material("static golden"){
+		cylinder(r1=R*0.7, r2=R*0.6, h=base_elevation);
+	}
+}
+
+stand_height = 1500;
+
+module stand(){
+	stand_radius = 30;
+	stand_base_h = feet_height;
+	stand_base_r = 250;
+	stand_base_thickness = 20;
+
+	material("static shinny metal")
+	union(){
+		cylinder(r=stand_radius, h=stand_height);
+		hull(){
+			cylinder(r=stand_base_r, h=stand_base_thickness);
+			cylinder(r=stand_radius, h=stand_base_h);
+		}
+	}	
+}
+
+security_radius = 1.5 * R;
+
+module stand_strings(){
+	d = 2 * security_radius * sin(90/4);
+	h = 300;
+
+	for (i=[1:6]){
+		rotate(90 + 45/2 + 45*i){
+			translate([security_radius * cos(90/4), 0])
+			stand_string(h, d);
+		}
+	}
+}
+
+module stand_string(h, d, top=50){
+	radius = h/2 + d*d/(8*h);
+	alfa = acos((radius-h)/radius);
+
+	material("static red")
+	translate([0,0,stand_height + radius-h - top])
+	rotate(90)
+	arc(r=10, R=radius, start = 270 - alfa, end = 270 + alfa);
+}
+
+module security_stands(){
+	for (i=[1:7]){
+		rotate(90 + 45*i){
+			translate([security_radius, 0])
+			stand();
+		}
+	}
+}
+
+module joystick_panel(){
+	//TODO: Implement-me!
+	joystick();
+}
+
+module joystick(){
+	//TODO: Implement-me!
+}
+
+feet_height = 150;
+
+module feet(){
+	//TODO: Implement-me!
+}
+
+module leg_profile_2d(){
+	w1 = 80;
+	w2 = 120;
+	h1 = 160;
+	h2 = 60;
+	t = 5;
+
+	difference(){
+		hull(){
+			translate([-w1/2, 0])
+			square([w1, h1]);
+
+			translate([-w2/2, 0])
+			square([w2, h2]);
+		}
+
+		hull(){
+			translate([-w1/2+t, t])
+			square([w1-2*t, h1-2*t]);
+
+			translate([-w2/2+t, t])
+			square([w2-2*t, h2-2*t]);
+		}
+	}
+}
+
+module legs(){
+	leg_length = R*1.2;
+
+	material("static shinny metal")
+	translate([0,0,feet_height])
+	for (i=[0:3]){
+		rotate(45 + 90*i){
+			rotate([90,0])
+			linear_extrude(height=leg_length)
+			leg_profile_2d();
+		}
+	}
 }
 
 module borders(){
@@ -53,7 +195,7 @@ module CRT(){
 	translate([R*0.4,0,base_thickness + R*0.7])
 	rotate(-90)
 	rotate([90-10, 0])
-	CRT_glass(29);
+	CRT_glass(36);
 }
 
 module coinbox(){
@@ -103,6 +245,18 @@ module arc(r, R, start=0, end=360){
 			translate([R,0])
 			cylinder(r=r, h=0.1);
 		}
+	}
+}
+
+module arc_cut(r, R, angles, length=20, depth=10){
+	N = 50;
+	PI = 3.1415;
+	for (angle = angles)
+	rotate([0,-angle])
+	translate([R,0])
+	difference(){
+		cylinder(r=r+1, h=length);
+		cylinder(r=r-depth, h=length);
 	}
 }
 
@@ -165,14 +319,21 @@ module front_arcs(){
 	translate([R + ajustment_offset,0])
 	rotate(-ajustment_angle)
 	translate([-R,0])
-	arc(r=50, R=(R+dR)*cos(90/4)-100, start=-10, end=133);
+	difference(){
+		arc(r=50, R=(R+dR)*cos(90/4)-100, start=-10, end=133);
+		arc_cut(r=50, R=(R+dR)*cos(90/4)-100, angles=[61, 128]);
+	}
 
 	material("shinny metal")
 	translate([0, R*sin(90/4), 1.5*base_thickness + ajustment_height])
 	translate([R + ajustment_offset,0])
 	rotate(ajustment_angle)
 	translate([-R,0])
-	arc(r=50, R=(R+dR)*cos(90/4)-100, start=-10, end=133);
+	difference(){
+		arc(r=50, R=(R+dR)*cos(90/4)-100, start=-10, end=133);
+		arc_cut(r=50, R=(R+dR)*cos(90/4)-100, angles=[61, 128]);
+	}
+
 }
 
 module back_lateral_border(l1=200, l2=400, h=200, d=300, e=10, tip_length = 50){
@@ -295,5 +456,4 @@ module sdeluxe_base(){
 	}
 }
 
-rotate(360*$t)
 gforce2_super_deluxe();

@@ -71,16 +71,32 @@ class GalaxyForce(ShowBase):
         self.shinny_metal.setPos(0, 0, 0)
         self.shinny_metal.setScale(.005)
 
+        self.static_shinny_metal = loader.loadModel('egg/gforce2_static_shinny_metal')
+        self.static_shinny_metal.setColor((0.6, 0.6, 0.6, 1))
+        self.static_shinny_metal.setPos(0, 0, 0)
+        self.static_shinny_metal.setScale(.005)
+
         metalic = Material()
         metalic.setShininess(20.0)
         metalic.setSpecular((0.6, 0.6, 0.9, 1))
-#        metalic.setAmbient((0.7, 0.7, 0.7, 1))
         self.shinny_metal.setMaterial(metalic)
+        self.static_shinny_metal.setMaterial(metalic)
 
         self.black_metal = loader.loadModel('egg/gforce2_dark_black_metal.egg')
         self.black_metal.setColor((0.3, 0.3, 0.35, 1))
         self.black_metal.setPos(0, 0, 0)
         self.black_metal.setScale(.005)
+        
+        self.static_golden = loader.loadModel('egg/gforce2_static_golden.egg')
+        self.static_golden.setColor((0.8, 0.5, 0.2, 1))
+        self.static_golden.setPos(0, 0, 0)
+        self.static_golden.setScale(.005)
+        self.static_golden.setMaterial(metalic)
+
+        self.static_red = loader.loadModel('egg/gforce2_static_red.egg')
+        self.static_red.setColor((0.8, 0, 0, 1))
+        self.static_red.setPos(0, 0, 0)
+        self.static_red.setScale(.005)
 
         # The blue point light
         # Point lights are lights that radiate from a single point, like a light bulb.
@@ -91,13 +107,21 @@ class GalaxyForce(ShowBase):
         self.bluePointLight.node().setColor((0, 0, .35, 1))
         self.bluePointLight.node().setSpecularColor((1, 1, 1, 1))
 
+        heading = 130
         self.spaceship = render.attachNewNode("spaceShip")
-        self.spaceship.setPosHpr(0, 60, -10, 0, -90, 0)
+        self.spaceship.setPosHpr(0, 60, -10, heading, -90, 0)
+
+        self.static_spaceship = render.attachNewNode("staticSpaceShip")
+        self.static_spaceship.setPosHpr(0, 60, -10, heading, -90, 0)
 
         self.glass.reparentTo(self.spaceship)
         self.shinny_metal.reparentTo(self.spaceship)
         self.black_metal.reparentTo(self.spaceship)
 
+        self.static_shinny_metal.reparentTo(self.static_spaceship)
+        self.static_golden.reparentTo(self.static_spaceship)
+        self.static_red.reparentTo(self.static_spaceship)
+        
         # Finally we store the light on the root of the scene graph.
         # This will cause them to affect everything in the scene.
         render.setLight(self.ambientLight)
@@ -181,4 +205,22 @@ class GalaxyForce(ShowBase):
 
 # Make an instance of our class and run the demo
 demo = GalaxyForce()
-demo.run()
+#demo.run()
+
+
+fifo = open("/tmp/sdlmame_out")
+states = {'start_lamp': '0'}
+
+while True:
+    try:
+        class_, pidnum, what, state = fifo.readline().strip().split()
+        states[what] = state
+    
+        if states['start_lamp'] == '1':
+            render.setLight(demo.bluePointLight)
+        else:
+            render.clearLight(demo.bluePointLight)
+    except ValueError:
+        pass
+
+    taskMgr.step()
