@@ -21,9 +21,58 @@ import colorsys
 def clamp(i, mn=0, mx=1):
     return min(max(i, mn), mx)
 
+heading = 130
 gforce2_data = {
-        'id': "gforce2",
-        'name': "Galaxy Force II Super Deluxe"
+    'id': "gforce2",
+    'name': "Galaxy Force II Super Deluxe",
+    'model': [
+        {'type': 'group',
+         'name': 'spaceship',
+         'position': (0, 60, -10),
+         'hpr': (heading, -90, 0),
+         'childNodes': [
+            {'type':'model',
+             'name': 'dark_black_metal',
+             'color': (0.3, 0.3, 0.35, 1),
+             'childNodes': [
+                 {'type': 'light',
+                  'name': "start_lamp",
+                  'attenuation': (.1, 0.04, 0.0),
+                  'color': (0, 0, .35, 1)
+                 }]
+            },
+            {'type':'model',
+             'name': 'glass',
+             'color': (0.7, 0.7, 0.7, 0.7)
+            },
+            {'type':'model',
+             'name': 'shinny_metal',
+             'color': (0.6, 0.6, 0.6, 1),
+             'metalic': True
+            }]
+        },
+
+        {'type': 'group',
+         'name': 'static_spaceship',
+         'position': (0, 60, -10),
+         'hpr': (heading, -90, 0),
+         'childNodes': [
+            {'type': "model",
+             'name': 'static_shinny_metal',
+             'color': (0.6, 0.6, 0.6, 1),
+             'metalic': True
+            },
+            {'type': "model",
+             'name': 'static_golden',
+             'color': (0.8, 0.5, 0.2, 1),
+             'metalic': True
+            },
+            {'type': "model",
+             'name': 'static_red',
+             'color': (0.8, 0, 0, 1),
+            }]
+        }
+    ]
 }
 
 class MAMEDevice(ShowBase):
@@ -32,42 +81,62 @@ class MAMEDevice(ShowBase):
         # Initialize the ShowBase class from which we inherit, which will
         # create a window and set up everything we need for rendering into it.
         ShowBase.__init__(self)
+        self.lights = {}
         self.device_data = device_data
         self.setup_scene()
         self.setup_model()
         self.setup_event_handlers()
 
     def setup_model(self):
-        heading = 130
-        self.spaceship = render.attachNewNode("spaceShip")
-        self.spaceship.setPosHpr(0, 60, -10, heading, -90, 0)
+        root = render.attachNewNode('device_root')
+        root_elements = self.device_data['model']
+        self.parseModelElements(root, root_elements)
 
-        self.static_spaceship = render.attachNewNode("staticSpaceShip")
-        self.static_spaceship.setPosHpr(0, 60, -10, heading, -90, 0)
+    def _getValue(self, element, key, default):
+        if key in element.keys():
+            return element[key]
+        else:
+            return default
 
-        self.load_3D_Model(name='glass', color=(0.7, 0.7, 0.7, 0.7), parent=self.spaceship)
-        self.load_3D_Model(name='shinny_metal', color=(0.6, 0.6, 0.6, 1), metalic=True, parent=self.spaceship)
-        bm = self.load_3D_Model(name='dark_black_metal', color=(0.3, 0.3, 0.35, 1), parent=self.spaceship)
-        self.bluePointLight = self.addLight(name="bluePointLight", parent=bm, attenuation=LVector3(.1, 0.04, 0.0), color=(0, 0, .35, 1))
+    def parseModelElements(self, currentNode, elements):
+        for element in elements:
+            if element['type'] == 'group':
+                name = self._getValue(element, 'name', None)
+                position = self._getValue(element, 'position', (0,0,0))
+                hpr = self._getValue(element, 'hpr', (0,0,0))
+                newNode = currentNode.attachNewNode(name)
+                newNode.setPosHpr(position[0], position[1], position[2], hpr[0], hpr[1], hpr[2])
 
-        self.load_3D_Model(name='static_shinny_metal', color=(0.6, 0.6, 0.6, 1), metalic=True, parent=self.static_spaceship)
-        self.load_3D_Model(name='static_golden', color=(0.8, 0.5, 0.2, 1), metalic=True, parent=self.static_spaceship)
-        self.load_3D_Model(name='static_red', color=(0.8, 0, 0, 1), parent=self.static_spaceship)
+            elif element['type'] == 'model':
+                name = self._getValue(element, 'name', None)
+                filename = self._getValue(element, 'filename', None)
+                color = self._getValue(element, 'color', None)
+                metalic = self._getValue(element, 'metalic', False)
+                newNode = self.load_3D_Model(name=name, filename=filename, color=color, metalic=metalic,parent=currentNode)
+
+            elif element['type'] == 'light':
+                name = self._getValue(element, 'name', None)
+                att = self._getValue(element, 'attenuation', False)
+                color = self._getValue(element, 'color', None)
+                newNode = self.addLight(name=name, parent=currentNode, attenuation=LVector3(att[0], att[1], att[2]), color=color)
+
+            childNodes = self._getValue(element, 'childNodes', [])
+            self.parseModelElements(newNode, childNodes)
 
     def setup_event_handlers(self):
         # listen to keys for controlling the lights
         self.accept("escape", sys.exit)
         self.accept("a", self.toggleLights, [[self.ambientLight]])
         self.accept("d", self.toggleLights, [[self.directionalLight]])
-        self.accept("p", self.toggleLights, [[self.bluePointLight]])
+        self.accept("p", self.toggleLights, [['start_lamp']])
         self.accept("l", self.togglePerPixelLighting)
         self.accept("e", self.toggleShadows)
         self.accept("z", self.addBrightness, [self.ambientLight, -.05])
         self.accept("x", self.addBrightness, [self.ambientLight, .05])
         self.accept("c", self.addBrightness, [self.directionalLight, -.05])
         self.accept("v", self.addBrightness, [self.directionalLight, .05])
-        self.accept("h", self.rotateShip, [self.spaceship, 5])
-        self.accept("g", self.rotateShip, [self.spaceship, -5])
+        self.accept("h", self.rotateShip, [render.find("**/spaceship"), 5])
+        self.accept("g", self.rotateShip, [render.find("**/spaceship"), -5])
 
     def setup_scene(self):
         # The main initialization of our class
@@ -135,6 +204,7 @@ class MAMEDevice(ShowBase):
         light.node().setColor(color)
         light.node().setSpecularColor(specular)
         render.setLight(light)
+        self.lights[name] = light
         return light
 
     def rotateShip(self, part, angle):
@@ -143,9 +213,10 @@ class MAMEDevice(ShowBase):
     # This function takes a list of lights and toggles their state. It takes in a
     # list so that more than one light can be toggled in a single command
     def toggleLights(self, lights):
-        for light in lights:
+        for lightName in lights:
             # If the given light is in our lightAttrib, remove it.
             # This has the effect of turning off the light
+            light = self.lights[lightName]
             if render.hasLight(light):
                 render.clearLight(light)
             # Otherwise, add it back. This has the effect of turning the light
@@ -201,15 +272,15 @@ fifo = open("/tmp/sdlmame_out")
 states = {'start_lamp': '0'}
 
 while True:
+    taskMgr.step()
+
     try:
         class_, pidnum, what, state = fifo.readline().strip().split()
         states[what] = state
-    
+        light = demo.lights['start_lamp']
         if states['start_lamp'] == '1':
-            render.setLight(demo.bluePointLight)
+            render.setLight(light)
         else:
-            render.clearLight(demo.bluePointLight)
+            render.clearLight(light)
     except ValueError:
         pass
-
-    taskMgr.step()
