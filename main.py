@@ -32,7 +32,7 @@ class MAMEDevice(ShowBase):
         ShowBase.__init__(self)
         self.layout_dir = layout_dir
         self.loadXMLlayout()
-        self.ship_angle = 0
+        self.dyn_angle = 0
         self.target_angle = 0
         self.delta_angle = 5
 
@@ -124,8 +124,8 @@ class MAMEDevice(ShowBase):
         self.accept("x", self.addBrightness, [self.ambientLight, .05])
         self.accept("c", self.addBrightness, [self.directionalLight, -.05])
         self.accept("v", self.addBrightness, [self.directionalLight, .05])
-        self.accept("h", self.rotateShip, [render.find("**/spaceship"), 5])
-        self.accept("g", self.rotateShip, [render.find("**/spaceship"), -5])
+        self.accept("h", self.manual_rotation, [render.find("**/dynamic"), 5])
+        self.accept("g", self.manual_rotation, [render.find("**/dynamic"), -5])
 
     def setup_scene(self):
         # The main initialization of our class
@@ -197,12 +197,12 @@ class MAMEDevice(ShowBase):
         self.light_states[name] = '0'
         return light
 
-    def rotateShip(self, part, angle):
+    def manual_rotation(self, part, angle):
         part.setHpr(0, 0, angle + part.getR())
 
-    def setShipHeading(self, angle):
-        ship = render.find("**/spaceship")
-        ship.setHpr(0, 0, angle)
+    def setDynamicHeading(self, angle):
+        dynamic = render.find("**/dynamic")
+        dynamic.setHpr(0, 0, angle)
 
     def toggleAllLights(self):
         all_light_names = self.light_elements.keys()
@@ -286,18 +286,24 @@ class MAMEDevice(ShowBase):
                 render.clearLight(light)
 
     def update_motors(self):
-        if self.ship_angle != self.target_angle:
-            self.setShipHeading(self.ship_angle)
-            if self.ship_angle - self.target_angle > self.delta_angle:
-                self.ship_angle -= self.delta_angle/3.0
-            elif self.ship_angle - self.target_angle < -self.delta_angle:
-                self.ship_angle  += self.delta_angle/3.0
+        if self.dyn_angle != self.target_angle:
+            self.setDynamicHeading(self.dyn_angle)
+            if self.dyn_angle - self.target_angle > self.delta_angle:
+                self.dyn_angle -= self.delta_angle/3.0
+            elif self.dyn_angle - self.target_angle < -self.delta_angle:
+                self.dyn_angle  += self.delta_angle/3.0
             else:
-                self.ship_angle = self.target_angle;
+                self.dyn_angle = self.target_angle;
 
+import sys
+if len(sys.argv) != 2:
+    print "\n\tusage: %s <device_id>\n\n" % sys.argv[0]
+    exit(-1)
+
+device_id = sys.argv[1]
 
 # Make an instance of our class and run the demo
-device = MAMEDevice("gforce2")
+device = MAMEDevice(device_id)
 
 while True:
     taskMgr.step()

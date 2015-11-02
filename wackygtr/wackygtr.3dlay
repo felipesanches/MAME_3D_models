@@ -1,0 +1,18 @@
+<mame3dlayout id="wackygtr" name="Wacky Gator" >
+    <group id="scene_placement" position="0, 60, -10" hpr="-130, -90, 0" >
+        <light id="l1" position="0, -60, 0" color="0, 1.0, 0, 1.0" />
+
+        <group id="dynamic" >
+            <model id="alligator" color="0.5, 0.8, 0.4, 1.0" />
+        </group>
+
+        <group id="static" >
+            <light id="start_lamp" attenuation="0.1, 0.04, 0.0" color="0.0, 0.0, 0.35, 1.0" />
+            <model id="blue_metal" color="0.3, 0.3, 0.6, 1.0" metalic="true" />
+            <model id="clear_wood" color="0.9, 0.8, 0.6, 1.0" />
+            <model id="dark_wood" color="0.3, 0.3, 0.3, 1.0" />
+            <model id="separators" color="0.8, 0.6, 0.2, 1.0" />
+            <model id="glass" color="0.7, 0.7, 0.7, 0.7" />
+        </group>
+    </group>
+</mame3dlayout>
