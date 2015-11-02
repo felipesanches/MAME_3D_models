@@ -1,4 +1,5 @@
-arc_detail_level = 40;
+arcs_longitudinal_detail_level = 100;
+arcs_circular_detail_level = 12;
 render_all = true;
 render_glass = false;
 render_dark_black_metal = false;
@@ -241,7 +242,7 @@ module pie_slice(radius, angle, step) {
 
 module partial_rotate_extrude(radius, start, end) {
 	intersection () {
-		rotate_extrude($fn=arc_detail_level)
+		rotate_extrude()
 		translate([radius,0,0])
 		child(0);
 
@@ -252,8 +253,8 @@ module partial_rotate_extrude(radius, start, end) {
 
 module arc(r, R, start=0, end=360){
 	rotate([90,0])
-	partial_rotate_extrude(R, start, end)
-	circle(r=r);
+	partial_rotate_extrude(R, start, end, $fn=arcs_longitudinal_detail_level)
+	circle(r=r, $fn=arcs_circular_detail_level);
 }
 
 module arc_cut(r, R, angles, length=20, depth=10){
@@ -281,14 +282,14 @@ module back_arcs(){
 		arc(r=50, R=back_radius, start=0, end=180);
 
 		translate([back_radius, 0, 0])
-		cylinder(r=50, h=back_height);
+		cylinder(r=50, h=back_height, $fn=arcs_circular_detail_level);
 
 		translate([-back_radius, 0, 0])
-		cylinder(r=50, h=back_height);
+		cylinder(r=50, h=back_height, $fn=arcs_circular_detail_level);
 
 		translate([0,0,back_height/2])
 		rotate([0, 90])
-		cylinder(r=50, h=back_radius*2, center=true);
+		cylinder(r=50, h=back_radius*2, center=true, $fn=arcs_circular_detail_level);
 	}
 }
 
@@ -304,10 +305,10 @@ module handrail_arc(){
 		arc(r=60, R=handrail_radius, start=0, end=180);
 
 		translate([handrail_radius, 0, 0])
-		cylinder(r=60, h=handrail_height);
+		cylinder(r=60, h=handrail_height, $fn=arcs_circular_detail_level);
 
 		translate([-handrail_radius, 0, 0])
-		cylinder(r=60, h=handrail_height);
+		cylinder(r=60, h=handrail_height, $fn=arcs_circular_detail_level);
 	}
 }
 
