@@ -81,11 +81,21 @@ class MAMEDevice(ShowBase):
         # Initialize the ShowBase class from which we inherit, which will
         # create a window and set up everything we need for rendering into it.
         ShowBase.__init__(self)
-        self.lights = {}
         self.device_data = device_data
+        self.ship_angle = 0
+        self.target_angle = 0
+        self.delta_angle = 5
+
+        self.setup_MAME_IPC()
         self.setup_scene()
         self.setup_model()
         self.setup_event_handlers()
+
+    def setup_MAME_IPC(self):
+        self.light_elements = {}
+        self.light_states = {}
+        #TODO: create FIFO file if it does not yet exist...
+        self.FIFO = open("/tmp/sdlmame_out")
 
     def setup_model(self):
         root = render.attachNewNode('device_root')
@@ -128,7 +138,7 @@ class MAMEDevice(ShowBase):
         self.accept("escape", sys.exit)
         self.accept("a", self.toggleLights, [[self.ambientLight]])
         self.accept("d", self.toggleLights, [[self.directionalLight]])
-        self.accept("p", self.toggleLights, [['start_lamp']])
+        self.accept("p", self.toggleAllLights)
         self.accept("l", self.togglePerPixelLighting)
         self.accept("e", self.toggleShadows)
         self.accept("z", self.addBrightness, [self.ambientLight, -.05])
@@ -204,19 +214,29 @@ class MAMEDevice(ShowBase):
         light.node().setColor(color)
         light.node().setSpecularColor(specular)
         render.setLight(light)
-        self.lights[name] = light
+        self.light_elements[name] = light
+        self.light_states[name] = '0'
         return light
 
     def rotateShip(self, part, angle):
         part.setH(angle + part.getH())
 
+    def setShipHeading(self, angle):
+        ship = render.find("**/spaceship")
+        ship.setH(angle)
+
+    def toggleAllLights(self):
+        all_light_names = self.light_elements.keys()
+        self.toggleLights(all_light_names)
+
     # This function takes a list of lights and toggles their state. It takes in a
     # list so that more than one light can be toggled in a single command
     def toggleLights(self, lights):
+    
         for lightName in lights:
             # If the given light is in our lightAttrib, remove it.
             # This has the effect of turning off the light
-            light = self.lights[lightName]
+            light = self.light_elements[lightName]
             if render.hasLight(light):
                 render.clearLight(light)
             # Otherwise, add it back. This has the effect of turning the light
@@ -264,23 +284,45 @@ class MAMEDevice(ShowBase):
         h, s, b = colorsys.rgb_to_hsv(color[0], color[1], color[2])
         return "%.2f" % b
 
+    def update_lights(self):
+        try:
+            class_, pidnum, name, state = self.FIFO.readline().strip().split()
+        except ValueError:
+            return
+
+        #This is for testing with Power Drift
+        # (because we still do not correctly motor movements in Galaxy Force 2 Super Deluxe)
+        if name == 'bank_motor_position':
+            angle = ((int(state)-1)/6.0 - 0.5) * 120
+            self.target_angle = angle
+            return
+
+        self.light_states[name] = state
+
+        if name in self.light_elements.keys():
+            light = self.light_elements[name]
+            if self.light_states[name] == '1':
+                render.setLight(light)
+            else:
+                render.clearLight(light)
+
+    def update_motors(self):
+        if self.ship_angle != self.target_angle:
+            self.setShipHeading(self.ship_angle)
+            if self.ship_angle - self.target_angle > self.delta_angle:
+                self.ship_angle -= self.delta_angle/3.0
+            elif self.ship_angle - self.target_angle < -self.delta_angle:
+                self.ship_angle  += self.delta_angle/3.0
+            else:
+                self.ship_angle = self.target_angle;
+
 
 # Make an instance of our class and run the demo
-demo = MAMEDevice(gforce2_data)
-
-fifo = open("/tmp/sdlmame_out")
-states = {'start_lamp': '0'}
+device = MAMEDevice(gforce2_data)
 
 while True:
     taskMgr.step()
-
-    try:
-        class_, pidnum, what, state = fifo.readline().strip().split()
-        states[what] = state
-        light = demo.lights['start_lamp']
-        if states['start_lamp'] == '1':
-            render.setLight(light)
-        else:
-            render.clearLight(light)
-    except ValueError:
-        pass
+    device.update_lights()
+    device.update_motors()
+    
+    
