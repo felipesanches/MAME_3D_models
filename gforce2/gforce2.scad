@@ -4,6 +4,7 @@ render_all = true;
 render_glass = false;
 render_dark_black_metal = false;
 render_shinny_metal = false;
+render_red_panels = false;
 render_static_shinny_metal = false;
 render_static_golden = false;
 render_static_red = false;
@@ -59,6 +60,10 @@ module material(name){
 
 	if (name=="static golden" && (render_static_golden || render_all))
 		color([0.8, 0.5, 0.2])
+		child(0);
+
+	if (name=="red panels" && (render_red_panels || render_all))
+		color([0.3, 0.0, 0.0, 0.7])
 		child(0);
 }
 
@@ -180,8 +185,9 @@ module borders(){
 
 	material("dark black metal"){
 		rotate(-6*90/4)
-		translate([R*cos(90/4)-d-e, 0, base_thickness])
-		back_lateral_border(l1=2*(R-2*d)*sin(90/4), l2=2*R*sin(90/4), h=300, d=d, e=e, tip_length=200);
+		translate([R*cos(90/4)-d-e, 0, base_thickness]){
+			back_lateral_border(l1=2*(R-2*d)*sin(90/4), l2=2*R*sin(90/4), h=300, d=d, e=e, tip_length=200);
+		}
 	}
 
 	material("dark black metal"){
@@ -189,6 +195,25 @@ module borders(){
 		translate([R*cos(90/4)-d-e, 0, base_thickness])
 		mirror([0,1])
 		back_lateral_border(l1=2*(R-2*d)*sin(90/4), l2=2*R*sin(90/4), h=300, d=d, e=e, tip_length=200);
+	}
+
+	material("red panels"){
+		rotate(-6*90/4)
+		translate([R*cos(90/4)-d-e, 0, base_thickness]){
+			render()
+			translate([0,0,10])
+			back_lateral_cover(l1=2*(R-2*d)*sin(90/4), l2=2*R*sin(90/4), h=300, d=d, e=e, tip_length=200);
+		}
+	}
+
+	material("red panels"){
+		rotate(-10*90/4)
+		translate([R*cos(90/4)-d-e, 0, base_thickness]){
+			render()
+			mirror([0,1])
+			translate([0,0,10])
+			back_lateral_cover(l1=2*(R-2*d)*sin(90/4), l2=2*R*sin(90/4), h=300, d=d, e=e, tip_length=200);
+		}
 	}
 }
 
@@ -345,32 +370,61 @@ module front_arcs(){
 
 }
 
-module back_lateral_border(l1=200, l2=400, h=200, d=300, e=10, tip_length = 50){
+module back_lateral_cover_2d(l, h, d, e){
+	translate([4*e, -l/2 + e])
+	square([d - 4*e, l - 2*e]);
 
-	hull(){
-		translate([0, -l1/2])
-		cube([e, l1, h]);
+	translate([d/3 + 4*e, -l/2 - 80 + e])
+	square([2*d/3 - 4*e, l + 160 - 2*e]);
+}
 
-		linear_extrude(height=e){
+module back_lateral_cover(l1, l2, h, d, e, tip_length){
+	intersection(){
+		back_lateral_border(l1, l2, h, d, e, tip_length, cut=false);
+
+		linear_extrude(height=h)
+		back_lateral_cover_2d(l1, h, d, e);
+	}
+}
+
+module back_lateral_border(l1=200, l2=400, h=200, d=300, e=10, tip_length = 50, cut=true){
+
+	render()
+	difference(){
+		union(){
 			hull(){
-				translate([0,-l1/2])
-				square([d, l1]);
+				translate([0, -l1/2])
+				cube([e, l1, h]);
 
-				translate([d, -l2/2 + tip_length])
-				square([e, l2 - tip_length]);
+				linear_extrude(height=e){
+					hull(){
+						translate([0,-l1/2])
+						square([d, l1]);
+
+						translate([d, -l2/2 + tip_length])
+						square([e, l2 - tip_length]);
+					}
+				}
+			}
+
+			hull(){
+				cube([e, l1/2, h]);
+
+				linear_extrude(height=e){
+					hull(){
+						square([d, l1/2]);
+
+						translate([d, -l2/2])
+						square([e, l2]);
+					}
+				}
 			}
 		}
-	}
 
-	hull(){
-		cube([e, l1/2, h]);
-
-		linear_extrude(height=e){
-			hull(){
-				square([d, l1/2]);
-
-				translate([d, -l2/2])
-				square([e, l2]);
+		if (cut){
+			translate([0,0,e]){
+				linear_extrude(height=h)
+				back_lateral_cover_2d(l1, h, d, e);
 			}
 		}
 	}

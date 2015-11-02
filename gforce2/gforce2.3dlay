@@ -5,6 +5,7 @@
                 <light id="start_lamp" attenuation="0.1, 0.04, 0.0" color="0, 0, .35, 1" />
             </model>
             <model id="glass" color="0.7, 0.7, 0.7, 0.7" />
+            <model id="red_panels" color="0.3, 0.0, 0.0, 0.7" />
             <model id="shinny_metal" color="0.6, 0.6, 0.6, 1" metalic="true" />
         </group>
 
