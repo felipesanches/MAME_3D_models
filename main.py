@@ -13,9 +13,11 @@ from panda3d.core import Material
 from panda3d.core import LVector3, LVecBase4f
 from direct.gui.OnscreenText import OnscreenText
 from direct.showbase.DirectObject import DirectObject
+from direct.task import Task
 import math
 import sys
 import colorsys
+from math import pi, sin, cos
 
 from xml.dom.minidom import parse
 import xml.dom.minidom
@@ -40,6 +42,10 @@ class MAMEDevice(ShowBase):
         self.setup_model()
         self.setup_scene()
         self.setup_event_handlers()
+
+        # Add the spinCameraTask procedure to the task manager.
+        self.taskMgr.add(self.spinCameraTask, "SpinCameraTask")
+
 
     def setup_MAME_IPC(self):
         self.light_elements = {}
@@ -95,20 +101,53 @@ class MAMEDevice(ShowBase):
                 position = self._getVector(element, 'position', (0.0, 0.0, 0.0))
                 hpr = self._getVector(element, 'hpr', (0.0, 0.0, 0.0))
                 newNode = currentNode.attachNewNode(id)
-                newNode.setPosHpr(float(position[0]), float(position[1]), float(position[2]), float(hpr[0]), float(hpr[1]), float(hpr[2]))
+                newNode.setPosHpr(float(position[0]),
+                                  float(position[1]),
+                                  float(position[2]),
+                                  float(hpr[0]),
+                                  float(hpr[1]),
+                                  float(hpr[2]))
 
             elif element.tagName == 'model':
-                _id = self._getValue(element, 'id', None)
+                id = self._getValue(element, 'id', None)
                 filename = self._getValue(element, 'filename', None)
+                position = self._getVector(element, 'position', (0.0, 0.0, 0.0))
+                hpr = self._getVector(element, 'hpr', (0.0, 0.0, 0.0))
                 color = self._getVector(element, 'color', (1,1,1,1))
+                spec = self._getVector(element, 'specular', (1,1,1,1))
                 metalic = self._getBoolean(element, 'metalic', False)
-                newNode = self.load_3D_Model(name=_id, filename=filename, color=LVecBase4f(color[0], color[1], color[2], color[3]), metalic=metalic, parent=currentNode)
+                shininess = self._getValue(element, 'shininess', 20)
+                scale = self._getValue(element, 'scale', 0.005)
+                newNode = self.load_3D_Model(name=id,
+                                             filename=filename,
+                                             position=position,
+                                             hpr=hpr,
+                                             color=LVecBase4f(color[0], color[1], color[2], color[3]),
+                                             metalic=metalic,
+                                             shininess=shininess,
+                                             specular=LVecBase4f(spec[0], spec[1], spec[2], spec[3]),
+                                             scale=scale,
+                                             parent=currentNode)
 
             elif element.tagName == 'light':
                 id = self._getValue(element, 'id', None)
                 att = self._getVector(element, 'attenuation', (0.1, 0.04, 0.0))
                 color = self._getVector(element, 'color', (1, 1, 1, 1))
-                newNode = self.addLight(name=id, parent=currentNode, attenuation=LVector3(att[0], att[1], att[2]), color=LVecBase4f(color[0], color[1], color[2], color[3]))
+                position = self._getVector(element, 'position', (0.0, 0.0, 0.0))
+                specular = self._getVector(element, 'specular', (1, 1, 1, 1))
+                newNode = self.addLight(name=id,
+                                        parent=currentNode,
+                                        position=position,
+                                        attenuation=LVector3(att[0], att[1], att[2]),
+                                        specular=specular,
+                                        color=LVecBase4f(color[0], color[1], color[2], color[3]))
+
+            elif element.tagName == 'camera':
+                id = self._getValue(element, 'id', None)
+                position = self._getVector(element, 'position', (0.0, 0.0, 0.0))
+                lookat = self._getValue(element, 'lookat', "device_root")
+                fov = float(self._getValue(element, 'fov', 80))
+                newNode = self.setupCamera(name=id, parent=currentNode, position=position, lookat=lookat, fov=fov)
 
             self.parseModelElements(newNode, element.childNodes)
 
@@ -165,8 +204,7 @@ class MAMEDevice(ShowBase):
         self.perPixelEnabled = False
         self.shadowsEnabled = False
 
-    def load_3D_Model(self, filename=None, name=None, parent=None, color=(1,1,1,1), position=(0,0,0), hpr=(0,0,0),
-                      scale=0.005, metalic=False, shininess=20, specular=(0.6, 0.6, 0.9, 1)):
+    def load_3D_Model(self, position, hpr, color, metalic=False, scale=0.005, filename=None, name=None, parent=None, shininess=None, specular=None):
         if parent is None:
             parent = render
 
@@ -187,15 +225,21 @@ class MAMEDevice(ShowBase):
         model.reparentTo(parent)
         return model
 
-    def addLight(self, name, parent, attenuation=LVector3(.1, 0.04, 0.0), color=(1, 1, 1, 1), specular=(1, 1, 1, 1)):
+    def addLight(self, name, parent, attenuation, position, color, specular):
         light = parent.attachNewNode(PointLight(name))
         light.node().setAttenuation(attenuation)
+        light.setPos(LVector3(position[0], position[1], position[2]))
         light.node().setColor(color)
         light.node().setSpecularColor(specular)
         render.setLight(light)
         self.light_elements[name] = light
         self.light_states[name] = '0'
         return light
+
+    def setupCamera(self, name, parent, position, lookat, fov):
+        self.camLens.setFov(fov)
+        self.camera.setPos(LVector3(position[0], position[1], position[2]))
+        self.camera.lookAt(render.find("**/"+lookat))
 
     def manual_rotation(self, part, angle):
         part.setHpr(0, 0, angle + part.getR())
@@ -294,6 +338,16 @@ class MAMEDevice(ShowBase):
                 self.dyn_angle  += self.delta_angle/3.0
             else:
                 self.dyn_angle = self.target_angle;
+ 
+    # Define a procedure to move the camera.
+    def spinCameraTask(self, task):
+        target = render.find("**/static")
+        angleDegrees = task.time * 12.0
+        angleRadians = angleDegrees * (pi / 180.0)
+        self.camera.setPos(0 + 20 * sin(angleRadians), 60 + -20.0 * cos(angleRadians), 5)
+        #self.camera.setHpr(angleDegrees, 0, 0)
+        self.camera.lookAt(target, (0,-4,0))
+        return Task.cont
 
 import sys
 if len(sys.argv) != 2:

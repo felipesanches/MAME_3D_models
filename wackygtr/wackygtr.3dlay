@@ -1,6 +1,8 @@
 <mame3dlayout id="wackygtr" name="Wacky Gator" >
     <group id="scene_placement" position="0, 60, -10" hpr="-130, -90, 0" >
-        <light id="l1" position="0, -60, 0" color="0, 1.0, 0, 1.0" />
+        <light id="light_1" position="0, -40, 10" color="0.7, 0.7, 1, 1" />
+        <light id="light_2" position="20, -20, 10" color="0.7, 1, 0.7, 1" />
+        <light id="light_3" position="-20, -20, 10" color="1, 0.7, 0.7, 1" />
 
         <group id="dynamic" >
             <model id="alligator" color="0.5, 0.8, 0.4, 1.0" />
@@ -14,5 +16,7 @@
             <model id="separators" color="0.8, 0.6, 0.2, 1.0" />
             <model id="glass" color="0.7, 0.7, 0.7, 0.7" />
         </group>
+        
+        <camera id="cam" position="0, -40, 8" lookat="static" fov="40"/>
     </group>
 </mame3dlayout>
