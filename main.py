@@ -10,85 +10,35 @@ from panda3d.core import AmbientLight, DirectionalLight
 from panda3d.core import PointLight
 from panda3d.core import TextNode
 from panda3d.core import Material
-from panda3d.core import LVector3
+from panda3d.core import LVector3, LVecBase4f
 from direct.gui.OnscreenText import OnscreenText
 from direct.showbase.DirectObject import DirectObject
 import math
 import sys
 import colorsys
 
+from xml.dom.minidom import parse
+import xml.dom.minidom
+
 # Simple function to keep a value in a given range (by default 0 to 1)
 def clamp(i, mn=0, mx=1):
     return min(max(i, mn), mx)
 
-heading = 130
-gforce2_data = {
-    'id': "gforce2",
-    'name': "Galaxy Force II Super Deluxe",
-    'model': [
-        {'type': 'group',
-         'name': 'spaceship',
-         'position': (0, 60, -10),
-         'hpr': (heading, -90, 0),
-         'childNodes': [
-            {'type':'model',
-             'name': 'dark_black_metal',
-             'color': (0.3, 0.3, 0.35, 1),
-             'childNodes': [
-                 {'type': 'light',
-                  'name': "start_lamp",
-                  'attenuation': (.1, 0.04, 0.0),
-                  'color': (0, 0, .35, 1)
-                 }]
-            },
-            {'type':'model',
-             'name': 'glass',
-             'color': (0.7, 0.7, 0.7, 0.7)
-            },
-            {'type':'model',
-             'name': 'shinny_metal',
-             'color': (0.6, 0.6, 0.6, 1),
-             'metalic': True
-            }]
-        },
-
-        {'type': 'group',
-         'name': 'static_spaceship',
-         'position': (0, 60, -10),
-         'hpr': (heading, -90, 0),
-         'childNodes': [
-            {'type': "model",
-             'name': 'static_shinny_metal',
-             'color': (0.6, 0.6, 0.6, 1),
-             'metalic': True
-            },
-            {'type': "model",
-             'name': 'static_golden',
-             'color': (0.8, 0.5, 0.2, 1),
-             'metalic': True
-            },
-            {'type': "model",
-             'name': 'static_red',
-             'color': (0.8, 0, 0, 1),
-            }]
-        }
-    ]
-}
-
 class MAMEDevice(ShowBase):
 
-    def __init__(self, device_data):
+    def __init__(self, layout_dir):
         # Initialize the ShowBase class from which we inherit, which will
         # create a window and set up everything we need for rendering into it.
         ShowBase.__init__(self)
-        self.device_data = device_data
+        self.layout_dir = layout_dir
+        self.loadXMLlayout()
         self.ship_angle = 0
         self.target_angle = 0
         self.delta_angle = 5
 
         self.setup_MAME_IPC()
-        self.setup_scene()
         self.setup_model()
+        self.setup_scene()
         self.setup_event_handlers()
 
     def setup_MAME_IPC(self):
@@ -97,41 +47,70 @@ class MAMEDevice(ShowBase):
         #TODO: create FIFO file if it does not yet exist...
         self.FIFO = open("/tmp/sdlmame_out")
 
+    def loadXMLlayout(self):
+        filename = self.layout_dir + "/" + self.layout_dir + ".3dlay"
+        # Open XML document using minidom parser
+        DOMTree = xml.dom.minidom.parse(filename)
+        self.device_layout = DOMTree.documentElement
+        self.device_id = self.device_layout.getAttribute('id')
+
     def setup_model(self):
         root = render.attachNewNode('device_root')
-        root_elements = self.device_data['model']
+        root_elements = self.device_layout.childNodes
+        self.device_title = self._getValue(self.device_layout, 'name', "untitled layout")
         self.parseModelElements(root, root_elements)
 
-    def _getValue(self, element, key, default):
-        if key in element.keys():
-            return element[key]
+    def _getBoolean(self, element, attr, default):
+        value = self._getValue(element, attr, default)
+        if not isinstance(value, bool):
+            if str(value) == "true":
+                return True
+            else:
+                return False
+        return value
+
+    def _getVector(self, element, attr, default):
+        value = self._getValue(element, attr, default)
+        if not isinstance(value, tuple):
+            value = [float(v.strip()) for v in str(value).split(',')]
+        return value
+
+    def _getValue(self, element, attr, default):
+        if element.hasAttribute(attr):
+            return element.getAttribute(attr)
         else:
             return default
 
     def parseModelElements(self, currentNode, elements):
+        
         for element in elements:
-            if element['type'] == 'group':
-                name = self._getValue(element, 'name', None)
-                position = self._getValue(element, 'position', (0,0,0))
-                hpr = self._getValue(element, 'hpr', (0,0,0))
-                newNode = currentNode.attachNewNode(name)
-                newNode.setPosHpr(position[0], position[1], position[2], hpr[0], hpr[1], hpr[2])
+            try:
+                x = element.tagName
+            except AttributeError:
+                #This is a hack to ignore XML Text nodes...
+                continue
 
-            elif element['type'] == 'model':
-                name = self._getValue(element, 'name', None)
+            if element.tagName == 'group':
+                id = self._getValue(element, 'id', None)
+                position = self._getVector(element, 'position', (0.0, 0.0, 0.0))
+                hpr = self._getVector(element, 'hpr', (0.0, 0.0, 0.0))
+                newNode = currentNode.attachNewNode(id)
+                newNode.setPosHpr(float(position[0]), float(position[1]), float(position[2]), float(hpr[0]), float(hpr[1]), float(hpr[2]))
+
+            elif element.tagName == 'model':
+                _id = self._getValue(element, 'id', None)
                 filename = self._getValue(element, 'filename', None)
-                color = self._getValue(element, 'color', None)
-                metalic = self._getValue(element, 'metalic', False)
-                newNode = self.load_3D_Model(name=name, filename=filename, color=color, metalic=metalic,parent=currentNode)
+                color = self._getVector(element, 'color', (1,1,1,1))
+                metalic = self._getBoolean(element, 'metalic', False)
+                newNode = self.load_3D_Model(name=_id, filename=filename, color=LVecBase4f(color[0], color[1], color[2], color[3]), metalic=metalic, parent=currentNode)
 
-            elif element['type'] == 'light':
-                name = self._getValue(element, 'name', None)
-                att = self._getValue(element, 'attenuation', False)
-                color = self._getValue(element, 'color', None)
-                newNode = self.addLight(name=name, parent=currentNode, attenuation=LVector3(att[0], att[1], att[2]), color=color)
+            elif element.tagName == 'light':
+                id = self._getValue(element, 'id', None)
+                att = self._getVector(element, 'attenuation', (0.1, 0.04, 0.0))
+                color = self._getVector(element, 'color', (1, 1, 1, 1))
+                newNode = self.addLight(name=id, parent=currentNode, attenuation=LVector3(att[0], att[1], att[2]), color=LVecBase4f(color[0], color[1], color[2], color[3]))
 
-            childNodes = self._getValue(element, 'childNodes', [])
-            self.parseModelElements(newNode, childNodes)
+            self.parseModelElements(newNode, element.childNodes)
 
     def setup_event_handlers(self):
         # listen to keys for controlling the lights
@@ -151,7 +130,7 @@ class MAMEDevice(ShowBase):
     def setup_scene(self):
         # The main initialization of our class
         # This creates the on screen title that is in every tutorial
-        self.title = OnscreenText(text=self.device_data['name'],
+        self.title = OnscreenText(text=self.device_title,
                                   style=1, fg=(1, 1, 0, 1), shadow=(0, 0, 0, 0.5),
                                   pos=(0.87, -0.95), scale = .07)
 
@@ -192,9 +171,9 @@ class MAMEDevice(ShowBase):
             parent = render
 
         if name:
-            filename = 'egg/%s_%s' % (self.device_data['id'], name)
+            filename = 'egg/%s_%s' % (self.device_id, name)
 
-        model = loader.loadModel(filename)
+        model = loader.loadModel('%s/%s' % (self.layout_dir, filename))
         model.setColor(color)
         model.setPosHpr(position[0], position[1], position[2], hpr[0], hpr[1], hpr[2])
         model.setScale(scale)
@@ -219,11 +198,11 @@ class MAMEDevice(ShowBase):
         return light
 
     def rotateShip(self, part, angle):
-        part.setH(angle + part.getH())
+        part.setHpr(0, 0, angle + part.getR())
 
     def setShipHeading(self, angle):
         ship = render.find("**/spaceship")
-        ship.setH(angle)
+        ship.setHpr(0, 0, angle)
 
     def toggleAllLights(self):
         all_light_names = self.light_elements.keys()
@@ -318,7 +297,7 @@ class MAMEDevice(ShowBase):
 
 
 # Make an instance of our class and run the demo
-device = MAMEDevice(gforce2_data)
+device = MAMEDevice("gforce2")
 
 while True:
     taskMgr.step()

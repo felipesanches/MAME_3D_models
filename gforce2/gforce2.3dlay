@@ -1,4 +1,4 @@
-<mame_3d_layout id="gforce2" name="Galaxy Force II Super Deluxe" >
+<mame3dlayout id="gforce2" name="Galaxy Force II Super Deluxe" >
     <group id="scene_placement" position="0, 60, -10" hpr="130, -90, 0" >
         <group id="spaceship" >
             <model id="dark_black_metal" color="0.3, 0.3, 0.35, 1" >
@@ -14,4 +14,4 @@
             <model id="static_red" color="0.8, 0, 0, 1" />
         </group>
     </group>
-</mame_3d_layout>
+</mame3dlayout>
