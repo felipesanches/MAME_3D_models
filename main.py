@@ -185,8 +185,8 @@ class MAMEDevice(ShowBase):
         self.accept("x", self.addBrightness, [self.ambientLight, .05])
         self.accept("c", self.addBrightness, [self.directionalLight, -.05])
         self.accept("v", self.addBrightness, [self.directionalLight, .05])
-        self.accept("h", self.manual_rotation, [render.find("**/dynamic"), 5])
-        self.accept("g", self.manual_rotation, [render.find("**/dynamic"), -5])
+        self.accept("h", self.manual_rotation, [render.find("**/dynamic"), 30])
+        self.accept("g", self.manual_rotation, [render.find("**/dynamic"), -30])
 
     def setup_scene(self):
         # This creates the on screen title that is in every tutorial
@@ -232,9 +232,10 @@ class MAMEDevice(ShowBase):
             filename = 'egg/%s_%s' % (self.device_id, name)
 
         model = loader.loadModel('%s/%s' % (self.layout_dir, filename))
+        model.reparentTo(parent)
         model.setColor(color)
         model.setPosHpr(position[0], position[1], position[2], hpr[0], hpr[1], hpr[2])
-        model.setScale(scale)
+        model.setScale(float(scale))
 
         if metalic:
             m = Material()
@@ -242,7 +243,6 @@ class MAMEDevice(ShowBase):
             m.setSpecular(specular)
             model.setMaterial(m)
 
-        model.reparentTo(parent)
         return model
 
     def addLight(self, name, parent, attenuation, position, color, specular, stroboscopic, spot):
@@ -273,11 +273,11 @@ class MAMEDevice(ShowBase):
         self.camera.lookAt(render.find("**/"+lookat))
 
     def manual_rotation(self, part, angle):
-        part.setHpr(0, 0, angle + part.getR())
+        self.target_angle += angle
 
     def setDynamicHeading(self, angle):
         dynamic = render.find("**/dynamic")
-        dynamic.setHpr(0, 0, angle)
+        dynamic.setH(angle)
 
     def toggleAllLights(self):
         all_light_names = self.light_elements.keys()
@@ -376,8 +376,7 @@ class MAMEDevice(ShowBase):
         angleDegrees = task.time * 12.0
         angleRadians = angleDegrees * (pi / 180.0)
         self.camera.setPos(0 + 20 * sin(angleRadians), 60 + -20.0 * cos(angleRadians), 5)
-        #self.camera.setHpr(angleDegrees, 0, 0)
-        self.camera.lookAt(target, (0,-4,0))
+        self.camera.lookAt(target, (0,0,2))
         return Task.cont
 
 import sys

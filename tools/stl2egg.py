@@ -1,7 +1,7 @@
 import sys
 import struct
 
-from panda3d.core import Point3D, Vec3D, VBase4
+from panda3d.core import Point3D, Vec3D, VBase4, CSZupRight
 from panda3d.egg import EggData, EggPolygon, EggVertexPool, EggVertex
 
 class STL2EGG():
@@ -15,6 +15,7 @@ class STL2EGG():
         #Adding vertexPool to the main data container:
         self.data.addChild(self.vertexPool) 
         self.load(in_file)
+        self.data.setCoordinateSystem(CSZupRight)
         self.data.writeEgg(out_file)
 
     def load(self, filename):
