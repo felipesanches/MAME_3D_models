@@ -8,10 +8,17 @@ render_red_panels = false;
 render_static_shinny_metal = false;
 render_static_golden = false;
 render_static_red = false;
+render_light_sphere = false;
 
 R = 1500; //guessed
 base_thickness = 400; //guessed
 base_elevation = R*0.3;
+
+//This is simply a helper sphere for
+//positioning lights in the scene:
+if (render_light_sphere){
+	sphere(r=100, $fn=20);
+}
 
 module gforce2_super_deluxe(){
 	security_stands();
@@ -165,16 +172,60 @@ module leg_profile_2d(){
 	}
 }
 
+flash_light_h = 180;
+flash_light_r = 70;
+
+module flash_light(){
+	e = 10;
+	difference(){
+		cylinder(r=flash_light_r, h=flash_light_h);
+
+		translate([0,0,e])
+		cylinder(r=flash_light_r-e, h=flash_light_h);
+	}
+
+	translate([0,0,flash_light_h])
+	rotate([0, -70])
+	cylinder(r=flash_light_r-e, h=e);
+
+}
+
+module foot(){
+	cylinder(r=60, h=20);
+	cylinder(r=20, h=feet_height);
+}
+
+//!foot();
+
 module legs(){
 	leg_length = R*1.2;
 
-	material("static shinny metal")
 	translate([0,0,feet_height])
 	for (i=[0:3]){
 		rotate(45 + 90*i){
 			rotate([90,0])
-			linear_extrude(height=leg_length)
-			leg_profile_2d();
+			material("static shinny metal"){
+				linear_extrude(height=leg_length)
+				leg_profile_2d();
+			}
+
+			rotate([90,0])
+			material("static red"){
+				linear_extrude(height=leg_length + 600)
+				scale(0.9)
+				leg_profile_2d();
+			}
+
+			material("static shinny metal"){
+				translate([leg_length - 30, 2*flash_light_r, flash_light_r])
+				rotate([0,-70])
+				flash_light();
+			}
+
+			material("static shinny metal"){
+				translate([leg_length - 100, 0, -feet_height])
+				foot();
+			}
 		}
 	}
 }

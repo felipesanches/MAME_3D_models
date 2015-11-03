@@ -6,11 +6,11 @@
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import PerspectiveLens
 from panda3d.core import NodePath
-from panda3d.core import AmbientLight, DirectionalLight
+from panda3d.core import AmbientLight, DirectionalLight, Spotlight
 from panda3d.core import PointLight
 from panda3d.core import TextNode
 from panda3d.core import Material
-from panda3d.core import LVector3, LVecBase4f
+from panda3d.core import LVector3, LVecBase4f, VBase4
 from direct.gui.OnscreenText import OnscreenText
 from direct.showbase.DirectObject import DirectObject
 from direct.task import Task
@@ -18,6 +18,7 @@ import math
 import sys
 import colorsys
 from math import pi, sin, cos
+from random import random
 
 from xml.dom.minidom import parse
 import xml.dom.minidom
@@ -43,12 +44,29 @@ class MAMEDevice(ShowBase):
         self.setup_scene()
         self.setup_event_handlers()
 
-        # Add the spinCameraTask procedure to the task manager.
+        # Add procedures to the task manager.
         self.taskMgr.add(self.spinCameraTask, "SpinCameraTask")
+        self.taskMgr.add(self.update_stroboscopic_lights, "UpdateStroboscopicLightsTask")
+
+    def update_stroboscopic_lights(self, taskid):
+        for light_name in self.stroboscopic_lights:
+            light = self.light_elements[light_name]
+            #render.setLight(light)
+            #continue
+            
+            if render.hasLight(light):
+                if random()*100 < 80:
+                    render.clearLight(light)
+            else:
+                if random()*100 < 5:
+                    render.setLight(light)
+            
+        return Task.cont
 
 
     def setup_MAME_IPC(self):
         self.light_elements = {}
+        self.stroboscopic_lights = []
         self.light_states = {}
         #TODO: create FIFO file if it does not yet exist...
         self.FIFO = open("/tmp/sdlmame_out")
@@ -135,11 +153,15 @@ class MAMEDevice(ShowBase):
                 color = self._getVector(element, 'color', (1, 1, 1, 1))
                 position = self._getVector(element, 'position', (0.0, 0.0, 0.0))
                 specular = self._getVector(element, 'specular', (1, 1, 1, 1))
+                stroboscopic = self._getBoolean(element, 'stroboscopic', False)
+                spot = self._getBoolean(element, 'spot', False)
                 newNode = self.addLight(name=id,
                                         parent=currentNode,
                                         position=position,
                                         attenuation=LVector3(att[0], att[1], att[2]),
                                         specular=specular,
+                                        stroboscopic=stroboscopic,
+                                        spot=spot,
                                         color=LVecBase4f(color[0], color[1], color[2], color[3]))
 
             elif element.tagName == 'camera':
@@ -167,7 +189,6 @@ class MAMEDevice(ShowBase):
         self.accept("g", self.manual_rotation, [render.find("**/dynamic"), -5])
 
     def setup_scene(self):
-        # The main initialization of our class
         # This creates the on screen title that is in every tutorial
         self.title = OnscreenText(text=self.device_title,
                                   style=1, fg=(1, 1, 0, 1), shadow=(0, 0, 0, 0.5),
@@ -178,7 +199,6 @@ class MAMEDevice(ShowBase):
         # First we create an ambient light. All objects are affected by ambient light equally
         # Create and name the ambient light
         self.ambientLight = render.attachNewNode(AmbientLight("ambientLight"))
-        # Set the color of the ambient light
         self.ambientLight.node().setColor((.1, .1, .1, 1))
         # add the newly created light to the lightAttrib
 
@@ -225,15 +245,26 @@ class MAMEDevice(ShowBase):
         model.reparentTo(parent)
         return model
 
-    def addLight(self, name, parent, attenuation, position, color, specular):
-        light = parent.attachNewNode(PointLight(name))
-        light.node().setAttenuation(attenuation)
-        light.setPos(LVector3(position[0], position[1], position[2]))
+    def addLight(self, name, parent, attenuation, position, color, specular, stroboscopic, spot):
+        if spot:
+            slight = Spotlight(name)
+            slight.setColor(VBase4(1, 1, 1, 1))
+            lens = PerspectiveLens()
+            slight.setLens(lens)
+            light = render.attachNewNode(slight)
+            light.setPos(LVector3(position[0], position[1], position[2]))
+            light.lookAt(parent)
+        else:
+            light = parent.attachNewNode(PointLight(name))
+            light.node().setAttenuation(attenuation)
+            light.setPos(LVector3(position[0], position[1], position[2]))
         light.node().setColor(color)
         light.node().setSpecularColor(specular)
         render.setLight(light)
         self.light_elements[name] = light
         self.light_states[name] = '0'
+        if stroboscopic:
+            self.stroboscopic_lights.append(name)
         return light
 
     def setupCamera(self, name, parent, position, lookat, fov):

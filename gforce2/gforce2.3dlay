@@ -1,5 +1,5 @@
 <mame3dlayout id="gforce2" name="Galaxy Force II Super Deluxe" >
-    <group id="scene_placement" position="0, 60, -10" hpr="130, -90, 0" >
+    <group id="scene_placement" position="0, 60, -10" hpr="0, -90, 0" >
         <group id="dynamic" >
             <model id="dark_black_metal" color="0.3, 0.3, 0.35, 1" >
                 <light id="start_lamp" attenuation="0.1, 0.04, 0.0" color="0, 0, .35, 1" />
@@ -10,6 +10,8 @@
         </group>
 
         <group id="static" >
+            <light id="strobo_1" color="1, 1, 1, 1" position="100,0,0" stroboscopic="true" spot="true"/>
+            <light id="start_lamp" color="0, 0, 1, 1"/>
             <model id="static_shinny_metal" color="0.6, 0.6, 0.6, 1" metalic="true" />
             <model id="static_golden" color="0.8, 0.5, 0.2, 1" metalic="true" />
             <model id="static_red" color="0.8, 0, 0, 1" />
