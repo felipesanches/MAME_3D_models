@@ -45,24 +45,10 @@ class MAMEDevice(ShowBase):
         self.setup_event_handlers()
 
         # Add procedures to the task manager.
-        self.taskMgr.add(self.spinCameraTask, "SpinCameraTask")
+        self.taskMgr.add(self.update_camera, "UpdateCameraTask")
         self.taskMgr.add(self.update_stroboscopic_lights, "UpdateStroboscopicLightsTask")
-
-    def update_stroboscopic_lights(self, taskid):
-        for light_name in self.stroboscopic_lights:
-            light = self.light_elements[light_name]
-            #render.setLight(light)
-            #continue
-            
-            if render.hasLight(light):
-                if random()*100 < 80:
-                    render.clearLight(light)
-            else:
-                if random()*100 < 5:
-                    render.setLight(light)
-            
-        return Task.cont
-
+        self.taskMgr.add(self.update_lights, "UpdateLightsTask")
+        self.taskMgr.add(self.update_motors, "UpdateMotorsTask")
 
     def setup_MAME_IPC(self):
         self.light_elements = {}
@@ -163,7 +149,7 @@ class MAMEDevice(ShowBase):
                                         specular=specular,
                                         stroboscopic=stroboscopic,
                                         spot=spot,
-                                        lookat=lookat,
+                                            lookat=lookat,
                                         color=LVecBase4f(color[0], color[1], color[2], color[3]))
 
             elif element.tagName == 'camera':
@@ -343,7 +329,7 @@ class MAMEDevice(ShowBase):
         h, s, b = colorsys.rgb_to_hsv(color[0], color[1], color[2])
         return "%.2f" % b
 
-    def update_lights(self):
+    def update_lights(self, task):
         try:
             class_, pidnum, name, state = self.FIFO.readline().strip().split()
         except ValueError:
@@ -364,8 +350,24 @@ class MAMEDevice(ShowBase):
                 render.setLight(light)
             else:
                 render.clearLight(light)
+        return Task.cont
 
-    def update_motors(self):
+    def update_stroboscopic_lights(self, taskid):
+        for light_name in self.stroboscopic_lights:
+            light = self.light_elements[light_name]
+            #render.setLight(light)
+            #continue
+            
+            if render.hasLight(light):
+                if random()*100 < 80:
+                    render.clearLight(light)
+            else:
+                if random()*100 < 5:
+                    render.setLight(light)
+            
+        return Task.cont
+
+    def update_motors(self, task):
         if self.dyn_angle != self.target_angle:
             self.setDynamicHeading(self.dyn_angle)
             if self.dyn_angle - self.target_angle > self.delta_angle:
@@ -374,9 +376,9 @@ class MAMEDevice(ShowBase):
                 self.dyn_angle  += self.delta_angle/3.0
             else:
                 self.dyn_angle = self.target_angle;
- 
-    # Define a procedure to move the camera.
-    def spinCameraTask(self, task):
+        return Task.cont
+
+    def update_camera(self, task):
         target = render.find("**/static")
         angleDegrees = task.time * 12.0
         angleRadians = angleDegrees * (pi / 180.0)
@@ -393,10 +395,5 @@ device_id = sys.argv[1]
 
 # Make an instance of our class and run the demo
 device = MAMEDevice(device_id)
-
-while True:
-    taskMgr.step()
-    device.update_lights()
-    device.update_motors()
-    
+device.run()
     
