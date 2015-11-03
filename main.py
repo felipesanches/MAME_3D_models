@@ -155,6 +155,7 @@ class MAMEDevice(ShowBase):
                 specular = self._getVector(element, 'specular', (1, 1, 1, 1))
                 stroboscopic = self._getBoolean(element, 'stroboscopic', False)
                 spot = self._getBoolean(element, 'spot', False)
+                lookat = self._getValue(element, 'lookat', None)
                 newNode = self.addLight(name=id,
                                         parent=currentNode,
                                         position=position,
@@ -162,6 +163,7 @@ class MAMEDevice(ShowBase):
                                         specular=specular,
                                         stroboscopic=stroboscopic,
                                         spot=spot,
+                                        lookat=lookat,
                                         color=LVecBase4f(color[0], color[1], color[2], color[3]))
 
             elif element.tagName == 'camera':
@@ -245,7 +247,7 @@ class MAMEDevice(ShowBase):
 
         return model
 
-    def addLight(self, name, parent, attenuation, position, color, specular, stroboscopic, spot):
+    def addLight(self, name, parent, attenuation, position, color, specular, stroboscopic, spot, lookat):
         if spot:
             slight = Spotlight(name)
             slight.setColor(VBase4(1, 1, 1, 1))
@@ -253,7 +255,10 @@ class MAMEDevice(ShowBase):
             slight.setLens(lens)
             light = render.attachNewNode(slight)
             light.setPos(LVector3(position[0], position[1], position[2]))
-            light.lookAt(parent)
+            if lookat == None:
+                light.lookAt(parent)
+            else:
+                light.lookAt(render.find("**/"+lookat))
         else:
             light = parent.attachNewNode(PointLight(name))
             light.node().setAttenuation(attenuation)
