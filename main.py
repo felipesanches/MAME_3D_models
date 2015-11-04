@@ -27,6 +27,64 @@ import xml.dom.minidom
 def clamp(i, mn=0, mx=1):
     return min(max(i, mn), mx)
 
+class MotionControl():
+    def __init__(self, element, _type, _from, _to, _min, _max, original_pos, original_hpr):
+        self.element=element
+        self._type=_type
+        self._from=_from
+        self._to=_to
+        self._min=_min
+        self._max=_max
+        self.original_pos = original_pos
+        self.original_hpr = original_hpr
+        
+        self.target_angle = original_hpr[0] #TODO: generalize this to full HPR movements.
+        self.current_angle = self.target_angle
+        self.t = 0.0
+
+    def setValue(self, value):
+        value = float(value)
+
+        if value < self._min:
+            value = self._min
+        if value > self._max:
+            value = self._max
+
+        self.t = (float(value) - self._min)/(self._max - self._min)
+        self.interpolate()
+
+    def interpolate(self):
+        self.target_angle = self._from[0] + self.t*(self._to[0] - self._from[0])#TODO: generalize this to full HPR movements.
+
+    def update(self):
+        self.updatePosition()
+        self.updateAngle()
+
+    def updatePosition(self):
+        pass
+
+    def move(self, delta):
+        if self.t + delta < 0:
+            self.t = 0.0
+        elif self.t + delta > 1:
+            self.t = 1.0
+        else:
+            self.t += delta
+
+        self.interpolate()
+
+    def updateAngle(self):
+        if self.current_angle != self.target_angle:
+            SPEED = 5
+            self.element.setHpr(self.current_angle, 0.0, 0.0)
+
+            if self.current_angle - self.target_angle > SPEED:
+                self.current_angle -= SPEED/3.0
+            elif self.current_angle - self.target_angle < -SPEED:
+                self.current_angle  += SPEED/3.0
+            else:
+                self.current_angle = self.target_angle;
+
 class MAMEDevice(ShowBase):
 
     def __init__(self, layout_dir):
@@ -46,16 +104,15 @@ class MAMEDevice(ShowBase):
 
         # Add procedures to the task manager.
         self.taskMgr.add(self.update_camera, "UpdateCameraTask")
+        self.taskMgr.add(self.update_motion, "UpdateMotionTask")
         self.taskMgr.add(self.update_stroboscopic_lights, "UpdateStroboscopicLightsTask")
-        self.taskMgr.add(self.update_lights, "UpdateLightsTask")
-        self.taskMgr.add(self.update_motors, "UpdateMotorsTask")
-
+        self.taskMgr.add(self.check_outputs, "CheckOutputsTask")
 
     def setup_MAME_IPC(self):
         self.light_elements = {}
         self.stroboscopic_lights = []
-        self.light_states = {}
         self.nodes_by_id = {}
+        self.motion = {}
         #TODO: create FIFO file if it does not yet exist...
         self.FIFO = open("/tmp/sdlmame_out")
 
@@ -165,6 +222,19 @@ class MAMEDevice(ShowBase):
                 fov = float(self._getValue(element, 'fov', 80))
                 newNode = self.setupCamera(id=id, parent=currentNode, position=position, lookat=lookat, fov=fov)
 
+            elif element.tagName == 'motion':
+                id = self._getValue(element, 'id', None)
+                target = self._getValue(element, 'target', None)
+                _type = self._getValue(element, 'type', None)
+                direction = self._getVector(element, 'direction', (0.0, 0.0, 1.0))
+                _min = float(self._getValue(element, 'min', None))
+                _max = float(self._getValue(element, 'max', None))
+                _from = self._getVector(element, 'from', None)
+                _to = self._getVector(element, 'to', None)
+                newNode = self.setupMotion(id=id, target=target, _type=_type, direction=direction,
+                                           _min=_min, _max=_max,
+                                           _from=_from, _to=_to)
+
             self.parseModelElements(newNode, element.childNodes)
 
     def setup_event_handlers(self):
@@ -179,8 +249,8 @@ class MAMEDevice(ShowBase):
         self.accept("x", self.addBrightness, [self.ambientLight, .05])
         self.accept("c", self.addBrightness, [self.directionalLight, -.05])
         self.accept("v", self.addBrightness, [self.directionalLight, .05])
-        self.accept("h", self.manual_rotation, [render.find("**/dynamic"), 30])
-        self.accept("g", self.manual_rotation, [render.find("**/dynamic"), -30])
+        self.accept("h", self.manual_rotation, [0.1])
+        self.accept("g", self.manual_rotation, [-0.1])
 
     def setup_scene(self):
         # This creates the on screen title that is in every tutorial
@@ -261,7 +331,6 @@ class MAMEDevice(ShowBase):
         light.node().setSpecularColor(specular)
         render.setLight(light)
         self.light_elements[id] = light
-        self.light_states[id] = '0'
         if stroboscopic:
             self.stroboscopic_lights.append(id)
 
@@ -269,14 +338,27 @@ class MAMEDevice(ShowBase):
             self.nodes_by_id[id] = light
         return light
 
+    def setupMotion(self, id, target, _type, direction,
+                          _from, _to, _min=0.0, _max=1.0):
+        assert(not type in ['linear', 'angular'])
+        assert(target != None)
+        assert(_from != None)
+        assert(_to != None)
+
+        element = self.nodes_by_id[target]
+        self.motion[id] = MotionControl(element, _type, _from, _to, _min, _max, element.getPos(), element.getHpr())
+
     def setupCamera(self, id, parent, position, lookat, fov):
         #TODO: register multiple cameras and add UI controls to cycle through them
         self.camLens.setFov(fov)
         self.camera.setPos(LVector3(position[0], position[1], position[2]))
         self.camera.lookAt(self.nodes_by_id[lookat])
 
-    def manual_rotation(self, part, angle):
-        self.target_angle += angle
+    def manual_rotation(self, delta):
+        keys = self.motion.keys()
+        if len(keys) > 0:
+            m = self.motion[keys[0]]
+            m.move(delta)
 
     def setDynamicHeading(self, angle):
         dynamic = render.find("**/dynamic")
@@ -341,27 +423,21 @@ class MAMEDevice(ShowBase):
         h, s, b = colorsys.rgb_to_hsv(color[0], color[1], color[2])
         return "%.2f" % b
 
-    def update_lights(self, task):
+    def check_outputs(self, task):
         try:
             class_, pidnum, name, state = self.FIFO.readline().strip().split()
         except ValueError:
-            return
+            return Task.cont
 
-        #This is for testing with Power Drift
-        # (because we still do not correctly motor movements in Galaxy Force 2 Super Deluxe)
-        if name == 'bank_motor_position':
-            angle = ((int(state)-1)/6.0 - 0.5) * 120
-            self.target_angle = angle
-            return
-
-        self.light_states[name] = state
-
-        if name in self.light_elements.keys():
+        if name in self.motion.keys():
+            self.motion[name].setValue(state)
+        elif name in self.light_elements.keys():
             light = self.light_elements[name]
-            if self.light_states[name] == '1':
+            if state == '1':
                 render.setLight(light)
             else:
                 render.clearLight(light)
+
         return Task.cont
 
     def update_stroboscopic_lights(self, taskid):
@@ -379,15 +455,9 @@ class MAMEDevice(ShowBase):
             
         return Task.cont
 
-    def update_motors(self, task):
-        if self.dyn_angle != self.target_angle:
-            self.setDynamicHeading(self.dyn_angle)
-            if self.dyn_angle - self.target_angle > self.delta_angle:
-                self.dyn_angle -= self.delta_angle/3.0
-            elif self.dyn_angle - self.target_angle < -self.delta_angle:
-                self.dyn_angle  += self.delta_angle/3.0
-            else:
-                self.dyn_angle = self.target_angle;
+    def update_motion(self, task):
+        for k in self.motion.keys():
+            self.motion[k].update()
         return Task.cont
 
     def update_camera(self, task):
@@ -408,4 +478,3 @@ device_id = sys.argv[1]
 # Make an instance of our class and run the demo
 device = MAMEDevice(device_id)
 device.run()
-    

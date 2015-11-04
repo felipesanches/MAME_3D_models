@@ -1,6 +1,6 @@
 <mame3dlayout id="gforce2" name="Galaxy Force II Super Deluxe" >
     <group id="scene_placement" position="0, 60, -10">
-        <group id="dynamic" >
+        <group id="moving_cabinet" >
             <model name="dark_black_metal" color="0.3, 0.3, 0.35, 1" />
             <model id="crt" name="glass" color="0.7, 0.7, 0.7, 0.7" />
             <model name="red_panels" color="0.3, 0.0, 0.0, 0.7" />
@@ -17,5 +17,16 @@
 
         <camera id="player" position="0, 0, 5" lookat="crt" fov="80"/>
         <camera id="observer" position="0, -40, 8" lookat="static" fov="80"/>
+        
+        <!-- This is for testing with the Power Drift driver
+            (because we still do not correctly emulate
+             motor movements in the MAME driver for the
+             Galaxy Force 2 Super Deluxe cabinet)
+        -->
+        <motion id="bank_motor_position"
+                target="moving_cabinet"
+                type="angular" direction="0, 0, 1"
+                min="1" max="7"
+                from="-120" to="120" />
     </group>
 </mame3dlayout>
