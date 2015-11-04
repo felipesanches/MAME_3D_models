@@ -50,10 +50,12 @@ class MAMEDevice(ShowBase):
         self.taskMgr.add(self.update_lights, "UpdateLightsTask")
         self.taskMgr.add(self.update_motors, "UpdateMotorsTask")
 
+
     def setup_MAME_IPC(self):
         self.light_elements = {}
         self.stroboscopic_lights = []
         self.light_states = {}
+        self.nodes_by_id = {}
         #TODO: create FIFO file if it does not yet exist...
         self.FIFO = open("/tmp/sdlmame_out")
 
@@ -111,9 +113,12 @@ class MAMEDevice(ShowBase):
                                   float(hpr[0]),
                                   float(hpr[1]),
                                   float(hpr[2]))
+                if id:
+                    self.nodes_by_id[id] = newNode
 
             elif element.tagName == 'model':
                 id = self._getValue(element, 'id', None)
+                name = self._getValue(element, 'name', None)
                 filename = self._getValue(element, 'filename', None)
                 position = self._getVector(element, 'position', (0.0, 0.0, 0.0))
                 hpr = self._getVector(element, 'hpr', (0.0, 0.0, 0.0))
@@ -122,7 +127,8 @@ class MAMEDevice(ShowBase):
                 metalic = self._getBoolean(element, 'metalic', False)
                 shininess = self._getValue(element, 'shininess', 20)
                 scale = self._getValue(element, 'scale', 0.005)
-                newNode = self.load_3D_Model(name=id,
+                newNode = self.load_3D_Model(id=id,
+                                             name=name,
                                              filename=filename,
                                              position=position,
                                              hpr=hpr,
@@ -142,14 +148,14 @@ class MAMEDevice(ShowBase):
                 stroboscopic = self._getBoolean(element, 'stroboscopic', False)
                 spot = self._getBoolean(element, 'spot', False)
                 lookat = self._getValue(element, 'lookat', None)
-                newNode = self.addLight(name=id,
+                newNode = self.addLight(id=id,
                                         parent=currentNode,
                                         position=position,
                                         attenuation=LVector3(att[0], att[1], att[2]),
                                         specular=specular,
                                         stroboscopic=stroboscopic,
                                         spot=spot,
-                                            lookat=lookat,
+                                        lookat=lookat,
                                         color=LVecBase4f(color[0], color[1], color[2], color[3]))
 
             elif element.tagName == 'camera':
@@ -157,7 +163,7 @@ class MAMEDevice(ShowBase):
                 position = self._getVector(element, 'position', (0.0, 0.0, 0.0))
                 lookat = self._getValue(element, 'lookat', "device_root")
                 fov = float(self._getValue(element, 'fov', 80))
-                newNode = self.setupCamera(name=id, parent=currentNode, position=position, lookat=lookat, fov=fov)
+                newNode = self.setupCamera(id=id, parent=currentNode, position=position, lookat=lookat, fov=fov)
 
             self.parseModelElements(newNode, element.childNodes)
 
@@ -212,7 +218,7 @@ class MAMEDevice(ShowBase):
         self.perPixelEnabled = False
         self.shadowsEnabled = False
 
-    def load_3D_Model(self, position, hpr, color, metalic=False, scale=0.005, filename=None, name=None, parent=None, shininess=None, specular=None):
+    def load_3D_Model(self, position, hpr, color, metalic=False, scale=0.005, id=None, name=None, filename=None, parent=None, shininess=None, specular=None):
         if parent is None:
             parent = render
 
@@ -231,11 +237,13 @@ class MAMEDevice(ShowBase):
             m.setSpecular(specular)
             model.setMaterial(m)
 
+        if id:
+            self.nodes_by_id[id] = model
         return model
 
-    def addLight(self, name, parent, attenuation, position, color, specular, stroboscopic, spot, lookat):
+    def addLight(self, id, parent, attenuation, position, color, specular, stroboscopic, spot, lookat):
         if spot:
-            slight = Spotlight(name)
+            slight = Spotlight(id)
             slight.setColor(VBase4(1, 1, 1, 1))
             lens = PerspectiveLens()
             slight.setLens(lens)
@@ -246,22 +254,26 @@ class MAMEDevice(ShowBase):
             else:
                 light.lookAt(render.find("**/"+lookat))
         else:
-            light = parent.attachNewNode(PointLight(name))
+            light = parent.attachNewNode(PointLight(id))
             light.node().setAttenuation(attenuation)
             light.setPos(LVector3(position[0], position[1], position[2]))
         light.node().setColor(color)
         light.node().setSpecularColor(specular)
         render.setLight(light)
-        self.light_elements[name] = light
-        self.light_states[name] = '0'
+        self.light_elements[id] = light
+        self.light_states[id] = '0'
         if stroboscopic:
-            self.stroboscopic_lights.append(name)
+            self.stroboscopic_lights.append(id)
+
+        if id:
+            self.nodes_by_id[id] = light
         return light
 
-    def setupCamera(self, name, parent, position, lookat, fov):
+    def setupCamera(self, id, parent, position, lookat, fov):
+        #TODO: register multiple cameras and add UI controls to cycle through them
         self.camLens.setFov(fov)
         self.camera.setPos(LVector3(position[0], position[1], position[2]))
-        self.camera.lookAt(render.find("**/"+lookat))
+        self.camera.lookAt(self.nodes_by_id[lookat])
 
     def manual_rotation(self, part, angle):
         self.target_angle += angle

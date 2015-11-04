@@ -1,20 +1,21 @@
 <mame3dlayout id="gforce2" name="Galaxy Force II Super Deluxe" >
     <group id="scene_placement" position="0, 60, -10">
         <group id="dynamic" >
-            <model id="dark_black_metal" color="0.3, 0.3, 0.35, 1" />
-            <model id="glass" color="0.7, 0.7, 0.7, 0.7" />
-            <model id="red_panels" color="0.3, 0.0, 0.0, 0.7" />
-            <model id="shinny_metal" color="0.6, 0.6, 0.6, 1" metalic="true" />
+            <model name="dark_black_metal" color="0.3, 0.3, 0.35, 1" />
+            <model id="crt" name="glass" color="0.7, 0.7, 0.7, 0.7" />
+            <model name="red_panels" color="0.3, 0.0, 0.0, 0.7" />
+            <model name="shinny_metal" color="0.6, 0.6, 0.6, 1" metalic="true" />
         </group>
 
         <group id="static" >
             <light id="start_lamp" position="0.0, 0.01, 0.01" color="0, 0, 1, 1"  spot="true" lookat="static"/>
             <light id="strobo_1" color="1, 1, 1, 1" position="100,0,0" stroboscopic="true" spot="true"/>
-            <model id="static_shinny_metal" color="0.6, 0.6, 0.6, 1" metalic="true" />
-            <model id="static_golden" color="0.8, 0.5, 0.2, 1" metalic="true" />
-            <model id="static_red" color="0.8, 0, 0, 1" />
+            <model name="static_shinny_metal" color="0.6, 0.6, 0.6, 1" metalic="true" />
+            <model name="static_golden" color="0.8, 0.5, 0.2, 1" metalic="true" />
+            <model name="static_red" color="0.8, 0, 0, 1" />
         </group>
 
-        <camera id="cam" position="0, -40, 8" lookat="static" fov="80"/>
+        <camera id="player" position="0, 0, 5" lookat="crt" fov="80"/>
+        <camera id="observer" position="0, -40, 8" lookat="static" fov="80"/>
     </group>
 </mame3dlayout>
