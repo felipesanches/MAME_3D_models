@@ -1,31 +1,29 @@
 #!/usr/bin/env python
-
-# Author: Jason Pratt (pratt@andrew.cmu.edu)
-# Author: Felipe Sanches (juca@members.fsf.org)
+# Prototype of a 3d artwork System for MAME
+#
+# This is free software, released under the terms of the
+# GNU General Public License version 2 (or later).
+#
+# Author: Felipe Correa da Silva Sanches (juca@members.fsf.org)
+#
+# Based on one of the Panda3d examples
+# by Jason Pratt (pratt@andrew.cmu.edu)
 
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import PerspectiveLens
-from panda3d.core import NodePath
 from panda3d.core import AmbientLight, DirectionalLight, Spotlight
 from panda3d.core import PointLight
-from panda3d.core import TextNode
 from panda3d.core import Material
 from panda3d.core import LVector3, LVecBase4f, VBase4
 from direct.gui.OnscreenText import OnscreenText
-from direct.showbase.DirectObject import DirectObject
 from direct.task import Task
 import math
 import sys
-import colorsys
 from math import pi, sin, cos
 from random import random
 
 from xml.dom.minidom import parse
 import xml.dom.minidom
-
-# Simple function to keep a value in a given range (by default 0 to 1)
-def clamp(i, mn=0, mx=1):
-    return min(max(i, mn), mx)
 
 class MotionControl():
     def __init__(self, element, _type, _from, _to, _min, _max, original_pos, original_hpr):
@@ -240,15 +238,7 @@ class MAMEDevice(ShowBase):
     def setup_event_handlers(self):
         # listen to keys for controlling the lights
         self.accept("escape", sys.exit)
-        self.accept("a", self.toggleLights, [[self.ambientLight]])
-        self.accept("d", self.toggleLights, [[self.directionalLight]])
         self.accept("p", self.toggleAllLights)
-        self.accept("l", self.togglePerPixelLighting)
-        self.accept("e", self.toggleShadows)
-        self.accept("z", self.addBrightness, [self.ambientLight, -.05])
-        self.accept("x", self.addBrightness, [self.ambientLight, .05])
-        self.accept("c", self.addBrightness, [self.directionalLight, -.05])
-        self.accept("v", self.addBrightness, [self.directionalLight, .05])
         self.accept("h", self.manual_rotation, [0.1])
         self.accept("g", self.manual_rotation, [-0.1])
 
@@ -360,10 +350,6 @@ class MAMEDevice(ShowBase):
             m = self.motion[keys[0]]
             m.move(delta)
 
-    def setDynamicHeading(self, angle):
-        dynamic = render.find("**/dynamic")
-        dynamic.setH(angle)
-
     def toggleAllLights(self):
         all_light_names = self.light_elements.keys()
         self.toggleLights(all_light_names)
@@ -382,46 +368,6 @@ class MAMEDevice(ShowBase):
             # on
             else:
                 render.setLight(light)
-
-    # This function turns per-pixel lighting on or off.
-    def togglePerPixelLighting(self):
-        if self.perPixelEnabled:
-            self.perPixelEnabled = False
-            render.clearShader()
-        else:
-            self.perPixelEnabled = True
-            render.setShaderAuto()
-
-
-    # This function turns shadows on or off.
-    def toggleShadows(self):
-        if self.shadowsEnabled:
-            self.shadowsEnabled = False
-            self.directionalLight.node().setShadowCaster(False)
-        else:
-            if not self.perPixelEnabled:
-                self.togglePerPixelLighting()
-            self.shadowsEnabled = True
-            self.directionalLight.node().setShadowCaster(True, 512, 512)
-
-    # This function reads the color of the light, uses a built-in python function
-    #(from the library colorsys) to convert from RGB (red, green, blue) color
-    # representation to HSB (hue, saturation, brightness), so that we can get the
-    # brighteness of a light, change it, and then convert it back to rgb to chagne
-    # the light's color
-    def addBrightness(self, light, amount):
-        color = light.node().getColor()
-        h, s, b = colorsys.rgb_to_hsv(color[0], color[1], color[2])
-        brightness = clamp(b + amount)
-        r, g, b = colorsys.hsv_to_rgb(h, s, brightness)
-        light.node().setColor((r, g, b, 1))
-
-    # Returns the brightness of a light as a string to put it in the instruction
-    # labels
-    def getBrightnessString(self, light):
-        color = light.node().getColor()
-        h, s, b = colorsys.rgb_to_hsv(color[0], color[1], color[2])
-        return "%.2f" % b
 
     def check_outputs(self, task):
         try:
