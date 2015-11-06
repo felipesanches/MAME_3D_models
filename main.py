@@ -94,9 +94,6 @@ class MAMEDevice(ShowBase):
         ShowBase.__init__(self)
         self.layout_dir = layout_dir
         self.loadXMLlayout()
-        self.dyn_angle = 0
-        self.target_angle = 0
-        self.delta_angle = 5
 
         self.setup_MAME_IPC()
         self.setup_model()
