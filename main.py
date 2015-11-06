@@ -9,19 +9,17 @@
 # Based on one of the Panda3d examples
 # by Jason Pratt (pratt@andrew.cmu.edu)
 
-from direct.showbase.ShowBase import ShowBase
 from panda3d.core import PerspectiveLens
 from panda3d.core import AmbientLight, DirectionalLight, Spotlight
 from panda3d.core import PointLight
 from panda3d.core import Material
 from panda3d.core import LVector3, LVecBase4f, VBase4
+from direct.showbase.ShowBase import ShowBase
 from direct.gui.OnscreenText import OnscreenText
 from direct.task import Task
-import math
 import sys
 from math import pi, sin, cos
 from random import random
-
 from xml.dom.minidom import parse
 import xml.dom.minidom
 
@@ -33,11 +31,19 @@ class MotionControl():
         self._to=_to
         self._min=_min
         self._max=_max
-        self.original_pos = original_pos
-        self.original_hpr = original_hpr
         
-        self.target_angle = original_hpr[0] #TODO: generalize this to full HPR movements.
-        self.current_angle = self.target_angle
+        if _type == "linear":
+            self.target_vector = original_pos
+            self.SPEED = float(self._max - self._min)/10
+        else:
+            self.target_vector = original_hpr
+            self.SPEED = 5.0
+
+
+        self.current_vector = [0, 0, 0]
+        for i in range(3):
+            self.current_vector[i] = self.target_vector[i]
+
         self.t = 0.0
 
     def setValue(self, value):
@@ -52,14 +58,8 @@ class MotionControl():
         self.interpolate()
 
     def interpolate(self):
-        self.target_angle = self._from[0] + self.t*(self._to[0] - self._from[0])#TODO: generalize this to full HPR movements.
-
-    def update(self):
-        self.updatePosition()
-        self.updateAngle()
-
-    def updatePosition(self):
-        pass
+        for i in range(3):
+            self.target_vector[i] = self._from[i] + self.t*(self._to[i] - self._from[i])
 
     def move(self, delta):
         if self.t + delta < 0:
@@ -71,17 +71,20 @@ class MotionControl():
 
         self.interpolate()
 
-    def updateAngle(self):
-        if self.current_angle != self.target_angle:
-            SPEED = 5
-            self.element.setHpr(self.current_angle, 0.0, 0.0)
-
-            if self.current_angle - self.target_angle > SPEED:
-                self.current_angle -= SPEED/3.0
-            elif self.current_angle - self.target_angle < -SPEED:
-                self.current_angle  += SPEED/3.0
+    def update(self):
+        if self.current_vector != self.target_vector:
+            if self._type == "linear":
+                self.element.setPos(self.current_vector[0], self.current_vector[1], self.current_vector[2])
             else:
-                self.current_angle = self.target_angle;
+                self.element.setHpr(self.current_vector[0], self.current_vector[1], self.current_vector[2])
+
+            for i in range(3):
+                if self.current_vector[i] - self.target_vector[i] > self.SPEED:
+                    self.current_vector[i] -= self.SPEED/3.0
+                elif self.current_vector[i] - self.target_vector[i] < -self.SPEED:
+                    self.current_vector[i] += self.SPEED/3.0
+                else:
+                    self.current_vector[i] = self.target_vector[i]
 
 class MAMEDevice(ShowBase):
 
@@ -224,12 +227,11 @@ class MAMEDevice(ShowBase):
                 id = self._getValue(element, 'id', None)
                 target = self._getValue(element, 'target', None)
                 _type = self._getValue(element, 'type', None)
-                direction = self._getVector(element, 'direction', (0.0, 0.0, 1.0))
                 _min = float(self._getValue(element, 'min', None))
                 _max = float(self._getValue(element, 'max', None))
                 _from = self._getVector(element, 'from', None)
                 _to = self._getVector(element, 'to', None)
-                newNode = self.setupMotion(id=id, target=target, _type=_type, direction=direction,
+                newNode = self.setupMotion(id=id, target=target, _type=_type,
                                            _min=_min, _max=_max,
                                            _from=_from, _to=_to)
 
@@ -328,7 +330,7 @@ class MAMEDevice(ShowBase):
             self.nodes_by_id[id] = light
         return light
 
-    def setupMotion(self, id, target, _type, direction,
+    def setupMotion(self, id, target, _type,
                           _from, _to, _min=0.0, _max=1.0):
         assert(not type in ['linear', 'angular'])
         assert(target != None)
