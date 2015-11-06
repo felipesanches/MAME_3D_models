@@ -17,6 +17,7 @@ from panda3d.core import LVector3, LVecBase4f, VBase4
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.OnscreenText import OnscreenText
 from direct.task import Task
+import os
 import sys
 from math import pi, sin, cos
 from random import random
@@ -111,8 +112,11 @@ class MAMEDevice(ShowBase):
         self.stroboscopic_lights = []
         self.nodes_by_id = {}
         self.motion = {}
-        #TODO: create FIFO file if it does not yet exist...
-        self.FIFO = open("/tmp/sdlmame_out")
+        IPC_CHANNEL = "/tmp/sdlmame_out"
+        if os.path.isfile(IPC_CHANNEL):
+            os.remove(IPC_CHANNEL)
+        os.mknod(IPC_CHANNEL)
+        self.IPC = open(IPC_CHANNEL)
 
     def loadXMLlayout(self):
         filename = self.layout_dir + "/" + self.layout_dir + ".3dlay"
@@ -370,7 +374,7 @@ class MAMEDevice(ShowBase):
 
     def check_outputs(self, task):
         try:
-            class_, pidnum, name, state = self.FIFO.readline().strip().split()
+            class_, pidnum, name, state = self.IPC.readline().strip().split()
         except ValueError:
             return Task.cont
 
