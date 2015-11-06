@@ -160,6 +160,16 @@ module doors(h=80){
 //function aligator_position(i) = states[i]/5;
 function aligator_position(i) = (1 + sin((15*$t+i/5)*360))/2;
 
+function alligator_angular_placement(i) = (i-2) * 2 * asin((bottom_width/2)/curvature_radius) / 6;
+
+
+echo ("alligator depth (X): ", bottom_depth/3 + 200);
+echo ("alligator height (Z): ", bottom_height - bottom_bevel);
+echo ("alligator curvature radius: ", curvature_radius);
+for (i=[0:4]){
+    echo ("alligator", i, " angular_placement:", alligator_angular_placement(i));
+}
+
 module body(){
 	translate([0, -bottom_width/2, 0])
 	sidewall();
@@ -171,19 +181,23 @@ module body(){
 	bottom_box();
 
 	translate([bottom_depth/3 + 200, 0, bottom_height - bottom_bevel]){
-		for (i=[0:5]){
-			translate([curvature_radius, 0])
-			rotate((i-2.5) * 2 * asin((bottom_width/2)/curvature_radius) / 6)
-			translate([-curvature_radius, 0])
-			wall();
-		}
+        material("separators"){
+            for (i=[0:5]){
+                translate([curvature_radius, 0])
+                rotate((i-2.5) * 2 * asin((bottom_width/2)/curvature_radius) / 6)
+                translate([-curvature_radius, 0])
+                wall();
+            }
+        }
 
-		for (i=[0:4]){
-			translate([curvature_radius, 0])
-			rotate((i-2) * 2 * asin((bottom_width/2)/curvature_radius) / 6)
-			translate([-curvature_radius - 200 + 200 * aligator_position(i), 0])
-			alligator();
-		}
+        material("alligators"){
+            for (i=[0:4]){
+                translate([curvature_radius, 0])
+                rotate(alligator_angular_placement(i))
+                translate([-curvature_radius - 200 + 200 * aligator_position(i), 0])
+                alligator();
+            }
+        }
 	}
 
 	translate([0, 0, bottom_height - 2*wood_thickness])
@@ -207,7 +221,6 @@ skew = [ [ 1,  0, -0.4,  0 ],
          [ 0,  0,    0,  1 ] ]; 
 
 module wall(h=40, l=160){
-	material("separators")
 	intersection(){
 		union(){
 			multmatrix(skew)
@@ -242,10 +255,13 @@ module rounded_block(x, y, z, r=20){
 	}
 }
 
+material("alligator"){
+    alligator();
+}
+
 module alligator(){
-	material("alligator")
-	translate([0,-25, 20])
-	rounded_block(200, 50,30);
+    translate([0,-25, 20])
+    rounded_block(200, 50,30);
 }
 
 //-------------------------------------------------------

@@ -32,20 +32,22 @@ class MotionControl():
         self._to=_to
         self._min=_min
         self._max=_max
+        self.original_pos = original_pos
+        self.original_hpr = original_hpr
+        self.target_vector = [0.0, 0.0, 0.0]
+        self.current_vector = [0.0, 0.0, 0.0]
         
         if _type == "linear":
-            self.target_vector = original_pos
-            self.SPEED = float(self._max - self._min)/10
+            self.SPEED = float(self._max - self._min)/20
         else:
-            self.target_vector = original_hpr
             self.SPEED = 5.0
 
-
-        self.current_vector = [0, 0, 0]
-        for i in range(3):
-            self.current_vector[i] = self.target_vector[i]
-
         self.t = 0.0
+        self.interpolate()
+
+    def interpolate(self):
+        for i in range(3):
+            self.target_vector[i] = self._from[i] + self.t*(self._to[i] - self._from[i])
 
     def setValue(self, value):
         value = float(value)
@@ -57,10 +59,6 @@ class MotionControl():
 
         self.t = (float(value) - self._min)/(self._max - self._min)
         self.interpolate()
-
-    def interpolate(self):
-        for i in range(3):
-            self.target_vector[i] = self._from[i] + self.t*(self._to[i] - self._from[i])
 
     def move(self, delta):
         if self.t + delta < 0:
@@ -75,9 +73,13 @@ class MotionControl():
     def update(self):
         if self.current_vector != self.target_vector:
             if self._type == "linear":
-                self.element.setPos(self.current_vector[0], self.current_vector[1], self.current_vector[2])
+                self.element.setPos(self.original_pos[0] + self.current_vector[0],
+                                    self.original_pos[1] + self.current_vector[1],
+                                    self.original_pos[2] + self.current_vector[2])
             else:
-                self.element.setHpr(self.current_vector[0], self.current_vector[1], self.current_vector[2])
+                self.element.setHpr(self.original_hpr[0] + self.current_vector[0],
+                                    self.original_hpr[1] + self.current_vector[1],
+                                    self.original_hpr[2] + self.current_vector[2])
 
             for i in range(3):
                 if self.current_vector[i] - self.target_vector[i] > self.SPEED:
@@ -373,21 +375,20 @@ class MAMEDevice(ShowBase):
                 render.setLight(light)
 
     def check_outputs(self, task):
-        try:
-            class_, pidnum, name, state = self.IPC.readline().strip().split()
-        except ValueError:
-            return Task.cont
+        while True:
+            try:
+                class_, pidnum, name, state = self.IPC.readline().strip().split()
+            except ValueError:
+                return Task.cont
 
-        if name in self.motion.keys():
-            self.motion[name].setValue(state)
-        elif name in self.light_elements.keys():
-            light = self.light_elements[name]
-            if state == '1':
-                render.setLight(light)
-            else:
-                render.clearLight(light)
-
-        return Task.cont
+            if name in self.motion.keys():
+                self.motion[name].setValue(state)
+            elif name in self.light_elements.keys():
+                light = self.light_elements[name]
+                if state == '1':
+                    render.setLight(light)
+                else:
+                    render.clearLight(light)
 
     def update_stroboscopic_lights(self, taskid):
         for light_name in self.stroboscopic_lights:
