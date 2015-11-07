@@ -1,0 +1,284 @@
+<CoordinateSystem> { Z-Up }
+
+<VertexPool> model {
+  <Vertex> 0 {
+    380 -482.6 918.2
+  }
+  <Vertex> 1 {
+    380 -482.6 1616.4
+  }
+  <Vertex> 2 {
+    380 482.6 918.2
+  }
+  <Vertex> 3 {
+    380 482.6 918.2
+  }
+  <Vertex> 4 {
+    380 -482.6 1616.4
+  }
+  <Vertex> 5 {
+    380 482.6 1616.4
+  }
+  <Vertex> 6 {
+    382 -482.6 919.028
+  }
+  <Vertex> 7 {
+    380 -482.6 1616.4
+  }
+  <Vertex> 8 {
+    380 -482.6 918.2
+  }
+  <Vertex> 9 {
+    382 -482.6 919.028
+  }
+  <Vertex> 10 {
+    382 -482.6 1616.4
+  }
+  <Vertex> 11 {
+    380 -482.6 1616.4
+  }
+  <Vertex> 12 {
+    480 -482.6 818.2
+  }
+  <Vertex> 13 {
+    382 -482.6 919.028
+  }
+  <Vertex> 14 {
+    380 -482.6 918.2
+  }
+  <Vertex> 15 {
+    481.414 -482.6 819.614
+  }
+  <Vertex> 16 {
+    382 -482.6 919.028
+  }
+  <Vertex> 17 {
+    480 -482.6 818.2
+  }
+  <Vertex> 18 {
+    380 482.6 918.2
+  }
+  <Vertex> 19 {
+    380 482.6 1616.4
+  }
+  <Vertex> 20 {
+    382 482.6 1616.4
+  }
+  <Vertex> 21 {
+    380 482.6 918.2
+  }
+  <Vertex> 22 {
+    382 482.6 1616.4
+  }
+  <Vertex> 23 {
+    382 482.6 919.028
+  }
+  <Vertex> 24 {
+    380 482.6 918.2
+  }
+  <Vertex> 25 {
+    382 482.6 919.028
+  }
+  <Vertex> 26 {
+    481.414 482.6 819.614
+  }
+  <Vertex> 27 {
+    380 482.6 918.2
+  }
+  <Vertex> 28 {
+    481.414 482.6 819.614
+  }
+  <Vertex> 29 {
+    480 482.6 818.2
+  }
+  <Vertex> 30 {
+    380 482.6 1616.4
+  }
+  <Vertex> 31 {
+    380 -482.6 1616.4
+  }
+  <Vertex> 32 {
+    382 -482.6 1616.4
+  }
+  <Vertex> 33 {
+    382 482.6 1616.4
+  }
+  <Vertex> 34 {
+    380 482.6 1616.4
+  }
+  <Vertex> 35 {
+    382 -482.6 1616.4
+  }
+  <Vertex> 36 {
+    382 -482.6 1616.4
+  }
+  <Vertex> 37 {
+    382 -482.6 919.028
+  }
+  <Vertex> 38 {
+    382 482.6 919.028
+  }
+  <Vertex> 39 {
+    382 482.6 1616.4
+  }
+  <Vertex> 40 {
+    382 -482.6 1616.4
+  }
+  <Vertex> 41 {
+    382 482.6 919.028
+  }
+  <Vertex> 42 {
+    382 482.6 919.028
+  }
+  <Vertex> 43 {
+    382 -482.6 919.028
+  }
+  <Vertex> 44 {
+    481.414 -482.6 819.614
+  }
+  <Vertex> 45 {
+    481.414 482.6 819.614
+  }
+  <Vertex> 46 {
+    382 482.6 919.028
+  }
+  <Vertex> 47 {
+    481.414 -482.6 819.614
+  }
+  <Vertex> 48 {
+    481.414 -482.6 819.614
+  }
+  <Vertex> 49 {
+    480 -482.6 818.2
+  }
+  <Vertex> 50 {
+    480 482.6 818.2
+  }
+  <Vertex> 51 {
+    481.414 482.6 819.614
+  }
+  <Vertex> 52 {
+    481.414 -482.6 819.614
+  }
+  <Vertex> 53 {
+    480 482.6 818.2
+  }
+  <Vertex> 54 {
+    380 -482.6 918.2
+  }
+  <Vertex> 55 {
+    380 482.6 918.2
+  }
+  <Vertex> 56 {
+    480 -482.6 818.2
+  }
+  <Vertex> 57 {
+    480 -482.6 818.2
+  }
+  <Vertex> 58 {
+    380 482.6 918.2
+  }
+  <Vertex> 59 {
+    480 482.6 818.2
+  }
+}
+<Polygon> {
+  <Normal> { -1 0 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 0 1 2 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { -1 0 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 3 4 5 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0 -1 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 6 7 8 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0 -1 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 9 10 11 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0 -1 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 12 13 14 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0 -1 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 15 16 17 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0 1 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 18 19 20 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0 1 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 21 22 23 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0 1 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 24 25 26 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0 1 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 27 28 29 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0 0 1 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 30 31 32 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0 0 1 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 33 34 35 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 1 0 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 36 37 38 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 1 0 0 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 39 40 41 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0.707106781186548 0 0.707106781186547 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 42 43 44 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0.707106781186548 0 0.707106781186547 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 45 46 47 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0.70710678118654 0 -0.707106781186555 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 48 49 50 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { 0.707106781186532 0 -0.707106781186563 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 51 52 53 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { -0.707106781186548 0 -0.707106781186548 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 54 55 56 <Ref> { model } }
+}
+<Polygon> {
+  <Normal> { -0.707106781186548 0 -0.707106781186548 }
+  <RGBA> { 0 0 0.5 0.5 }
+  <VertexRef> { 57 58 59 <Ref> { model } }
+}
