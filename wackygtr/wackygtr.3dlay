@@ -46,8 +46,8 @@
             <model id="scorepanel" name="glass" color="0.7, 0.7, 0.7, 0.7" />
         </group>
         
-        <camera id="gators_cam" position="0, -40, 8" lookat="static" fov="40"/>
-        <camera id="scorepanel_cam" position="0, -40, 8" lookat="scorepanel" fov="40"/>
+        <camera id="alligators camera" position="10, 0, 12" lookat="allgators" lookat_offset="0, 0, 2" type='still' fov="40"/>
+        <camera id="scorepanel camera" position="10, 0, 5" lookat="scorepanel" lookat_offset="0, 0, 5" type='still' fov="60"/>
         
         <motion id="alligator0" target="gator0" type="linear"
         min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />

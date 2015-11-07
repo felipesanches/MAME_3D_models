@@ -13,7 +13,7 @@ from panda3d.core import PerspectiveLens
 from panda3d.core import AmbientLight, DirectionalLight, Spotlight
 from panda3d.core import PointLight
 from panda3d.core import Material
-from panda3d.core import LVector3, LVecBase4f, VBase4
+from panda3d.core import LVector3, LVecBase4f, VBase4, LPoint3f
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.OnscreenText import OnscreenText
 from direct.task import Task
@@ -97,11 +97,27 @@ class MAMEDevice(ShowBase):
         ShowBase.__init__(self)
         self.layout_dir = layout_dir
         self.loadXMLlayout()
-
         self.setup_MAME_IPC()
+
+        self.cameras = [
+            {
+                'name': 'default orbiting camera',
+                'type': "orbit",
+                'fov':50,
+                'position': [0, 60, 5],
+                'lookat': "static",
+                'lookat_offset': [0, 0, 2],
+                'parent': render
+            }
+        ]
+
         self.setup_model()
         self.setup_scene()
         self.setup_event_handlers()
+
+        self.currentCamera = 0
+        self.setupCamera(0)
+        self.setup_text_overlay()
 
         # Add procedures to the task manager.
         self.taskMgr.add(self.update_camera, "UpdateCameraTask")
@@ -129,6 +145,7 @@ class MAMEDevice(ShowBase):
 
     def setup_model(self):
         root = render.attachNewNode('device_root')
+        self.nodes_by_id['device_root'] = root
         root_elements = self.device_layout.childNodes
         self.device_title = self._getValue(self.device_layout, 'name', "untitled layout")
         self.parseModelElements(root, root_elements)
@@ -163,6 +180,7 @@ class MAMEDevice(ShowBase):
                 #This is a hack to ignore XML Text nodes...
                 continue
 
+            newNode = None
             if element.tagName == 'group':
                 id = self._getValue(element, 'id', None)
                 position = self._getVector(element, 'position', (0.0, 0.0, 0.0))
@@ -223,8 +241,16 @@ class MAMEDevice(ShowBase):
                 id = self._getValue(element, 'id', None)
                 position = self._getVector(element, 'position', (0.0, 0.0, 0.0))
                 lookat = self._getValue(element, 'lookat', "device_root")
+                lookat_offset = self._getVector(element, 'lookat_offset', (0.0, 0.0, 0.0))
                 fov = float(self._getValue(element, 'fov', 80))
-                newNode = self.setupCamera(id=id, parent=currentNode, position=position, lookat=lookat, fov=fov)
+                _type = self._getValue(element, 'type', 'still')
+                self.cameras.append({'name':id,
+                                     'fov': fov,
+                                     'lookat': lookat,
+                                     'lookat_offset':lookat_offset,
+                                     'position': position,
+                                     'parent': currentNode,
+                                     'type': _type})
 
             elif element.tagName == 'motion':
                 id = self._getValue(element, 'id', None)
@@ -238,21 +264,35 @@ class MAMEDevice(ShowBase):
                                            _min=_min, _max=_max,
                                            _from=_from, _to=_to)
 
-            self.parseModelElements(newNode, element.childNodes)
+            if newNode:
+                self.parseModelElements(newNode, element.childNodes)
+
+    def selectNextCamera(self):
+        self.currentCamera = (self.currentCamera + 1) % len(self.cameras)
+        self.setup_text_overlay()
 
     def setup_event_handlers(self):
         # listen to keys for controlling the lights
         self.accept("escape", sys.exit)
+        self.accept("tab", self.selectNextCamera)
         self.accept("p", self.toggleAllLights)
         self.accept("h", self.manual_rotation, [0.1])
         self.accept("g", self.manual_rotation, [-0.1])
 
-    def setup_scene(self):
-        # This creates the on screen title that is in every tutorial
-        self.title = OnscreenText(text=self.device_title,
-                                  style=1, fg=(1, 1, 0, 1), shadow=(0, 0, 0, 0.5),
-                                  pos=(0.87, -0.95), scale = .07)
+    def setup_text_overlay(self):
+        try:
+            self.title.removeNode()
+        except:
+            pass
 
+        # This creates the on screen title that is in every tutorial
+        cam = self.cameras[self.currentCamera]
+        camera_text = " ("+cam['name']+")"
+        self.title = OnscreenText(text=self.device_title + camera_text,
+                                  style=1, fg=(1, 1, 0, 1), shadow=(0, 0, 0, 0.5),
+                                  pos=(0.0, -0.95), scale = .07)
+
+    def setup_scene(self):
         self.load_3D_Model(filename = "../common/egg/disco_hall", color=(0.5, 0.6, 0.5, 1), position=(0, 80, -10), hpr=(90, 0, 0), scale=1)
 
         # First we create an ambient light. All objects are affected by ambient light equally
@@ -291,7 +331,11 @@ class MAMEDevice(ShowBase):
             filename = 'egg/%s_%s' % (self.device_id, name)
 
         model = loader.loadModel('%s/%s' % (self.layout_dir, filename))
-        model.reparentTo(parent)
+        if (id):
+            container = parent.attachNewNode(id)
+            model.reparentTo(container)
+        else:
+            model.reparentTo(parent)
         model.setColor(color)
         model.setPosHpr(position[0], position[1], position[2], hpr[0], hpr[1], hpr[2])
         model.setScale(float(scale))
@@ -343,11 +387,22 @@ class MAMEDevice(ShowBase):
         element = self.nodes_by_id[target]
         self.motion[id] = MotionControl(element, _type, _from, _to, _min, _max, element.getPos(), element.getHpr())
 
-    def setupCamera(self, id, parent, position, lookat, fov):
-        #TODO: register multiple cameras and add UI controls to cycle through them
-        self.camLens.setFov(fov)
-        self.camera.setPos(LVector3(position[0], position[1], position[2]))
-        self.camera.lookAt(self.nodes_by_id[lookat])
+    def setupCamera(self, index, time=0):
+        cam = self.cameras[index]
+        self.camera.reparentTo(cam['parent'])
+        pos = cam['position']
+
+        if cam['type'] == "still":
+            self.camera.setPos(pos[0], pos[1], pos[2])
+        elif cam['type'] == "orbit":
+            angleDegrees = time * 12.0
+            angleRadians = angleDegrees * (pi / 180.0)
+            self.camera.setPos(pos[0] + 20 * sin(angleRadians), pos[1] - 20.0 * cos(angleRadians), pos[2])
+
+        target = render.find("**/"+cam['lookat'])
+        offs = cam['lookat_offset']
+        self.camLens.setFov(cam['fov'])
+        self.camera.lookAt(target, LPoint3f(offs[0], offs[1], offs[2]))
 
     def manual_rotation(self, delta):
         keys = self.motion.keys()
@@ -411,11 +466,7 @@ class MAMEDevice(ShowBase):
         return Task.cont
 
     def update_camera(self, task):
-        target = render.find("**/static")
-        angleDegrees = task.time * 12.0
-        angleRadians = angleDegrees * (pi / 180.0)
-        self.camera.setPos(0 + 20 * sin(angleRadians), 60 + -20.0 * cos(angleRadians), 5)
-        self.camera.lookAt(target, (0,0,2))
+        self.setupCamera(self.currentCamera, task.time)
         return Task.cont
 
 import sys
