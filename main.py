@@ -14,6 +14,7 @@ from panda3d.core import AmbientLight, DirectionalLight, Spotlight
 from panda3d.core import PointLight
 from panda3d.core import Material
 from panda3d.core import LVector3, LVecBase4f, VBase4, LPoint3f
+from panda3d.core import WindowProperties
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.OnscreenText import OnscreenText
 from direct.task import Task
@@ -117,7 +118,7 @@ class MAMEDevice(ShowBase):
 
         self.currentCamera = 0
         self.setupCamera(0)
-        self.setup_text_overlay()
+        self.setup_camera_text()
 
         # Add procedures to the task manager.
         self.taskMgr.add(self.update_camera, "UpdateCameraTask")
@@ -269,7 +270,7 @@ class MAMEDevice(ShowBase):
 
     def selectNextCamera(self):
         self.currentCamera = (self.currentCamera + 1) % len(self.cameras)
-        self.setup_text_overlay()
+        self.setup_camera_text()
 
     def setup_event_handlers(self):
         # listen to keys for controlling the lights
@@ -279,7 +280,7 @@ class MAMEDevice(ShowBase):
         self.accept("h", self.manual_rotation, [0.1])
         self.accept("g", self.manual_rotation, [-0.1])
 
-    def setup_text_overlay(self):
+    def setup_camera_text(self):
         try:
             self.title.removeNode()
         except:
@@ -291,6 +292,11 @@ class MAMEDevice(ShowBase):
         self.title = OnscreenText(text=self.device_title + camera_text,
                                   style=1, fg=(1, 1, 0, 1), shadow=(0, 0, 0, 0.5),
                                   pos=(0.0, -0.95), scale = .07)
+
+        props = WindowProperties()
+        props.setTitle( "[MAME 3D artwork system prototype] " + self.device_title + camera_text )
+        base.win.requestProperties( props )
+
 
     def setup_scene(self):
         self.load_3D_Model(filename = "../common/egg/disco_hall", color=(0.5, 0.6, 0.5, 1), position=(0, 80, -10), hpr=(90, 0, 0), scale=1)
