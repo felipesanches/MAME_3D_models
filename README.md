@@ -12,11 +12,13 @@ There's also a python script in this repository for converting STL files to EGG 
 
 # keyboard commands
 
-**TAB** alternates between the default orbiting camera and any other camera that may have been declared in the 3d artwork layout XML file.
+**TAB** key alternates between the default orbiting camera and any other camera that may have been declared in the 3d artwork layout XML file.
 
-**ESC** exists
+**ESC** key exists the program.
 
-**h** and **g** are used to control the motion relative to the first **motion** tag found in an XML file. For Galaxy Force II Super Deluxe, it controls the rotation of the cabinet.
+**H** and **G** keys are used to control the motion relative to the first **motion** tag found in an XML file. For Galaxy Force II Super Deluxe, it controls the rotation of the cabinet.
+
+**F** key toggles fullscreen mode.
 
 # Tips
 

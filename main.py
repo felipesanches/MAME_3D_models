@@ -120,6 +120,9 @@ class MAMEDevice(ShowBase):
         self.setupCamera(0)
         self.setup_camera_text()
 
+        self.isFullScreen = True
+        self.toggle_fullscreen() #so that we actually start windowed...
+
         # Add procedures to the task manager.
         self.taskMgr.add(self.update_camera, "UpdateCameraTask")
         self.taskMgr.add(self.update_motion, "UpdateMotionTask")
@@ -279,6 +282,16 @@ class MAMEDevice(ShowBase):
         self.accept("p", self.toggleAllLights)
         self.accept("h", self.manual_rotation, [0.1])
         self.accept("g", self.manual_rotation, [-0.1])
+        self.accept("f", self.toggle_fullscreen)
+
+    def toggle_fullscreen(self):
+        wp = WindowProperties()
+        self.isFullScreen = not self.isFullScreen
+        wp.setFullscreen(self.isFullScreen)
+        wp.setSize(1024, 768)
+        base.openMainWindow()
+        base.win.requestProperties(wp)
+        base.graphicsEngine.openWindows()
 
     def setup_camera_text(self):
         try:
