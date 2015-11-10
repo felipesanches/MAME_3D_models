@@ -2,7 +2,7 @@
     <group id="scene_placement" position="0, 60, -10">
         <group id="moving_cabinet" hpr="200, 0, 0" >
             <model name="dark_black_metal" color="0.3, 0.3, 0.35, 1" />
-            <model id="crt" name="glass" color="0.7, 0.7, 0.7, 0.7" />
+            <model id="crt" name="glass" texture="gforce2_screen.png" />
             <model name="red_panels" color="0.3, 0.0, 0.0, 0.7" />
             <model name="shinny_metal" color="0.6, 0.6, 0.6, 1" metalic="true" />
             <camera id="player" position="-2, 0, 10" lookat="crt" lookat_offset="1, 0, 10" fov="100"/>

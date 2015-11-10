@@ -211,6 +211,9 @@ class MAMEDevice(ShowBase):
                 metalic = self._getBoolean(element, 'metalic', False)
                 shininess = self._getValue(element, 'shininess', 20)
                 scale = self._getValue(element, 'scale', 0.005)
+                texture = self._getValue(element, 'texture', None)
+                if texture:
+                    texture = self.device_id + "/" + texture
                 newNode = self.load_3D_Model(id=id,
                                              name=name,
                                              filename=filename,
@@ -221,6 +224,7 @@ class MAMEDevice(ShowBase):
                                              shininess=shininess,
                                              specular=LVecBase4f(spec[0], spec[1], spec[2], spec[3]),
                                              scale=scale,
+                                             texture=texture,
                                              parent=currentNode)
 
             elif element.tagName == 'light':
@@ -343,7 +347,7 @@ class MAMEDevice(ShowBase):
         self.perPixelEnabled = False
         self.shadowsEnabled = False
 
-    def load_3D_Model(self, position, hpr, color, metalic=False, scale=0.005, id=None, name=None, filename=None, parent=None, shininess=None, specular=None):
+    def load_3D_Model(self, position, hpr, color, metalic=False, scale=0.005, id=None, name=None, filename=None, parent=None, shininess=None, specular=None, texture=None):
         if parent is None:
             parent = render
 
@@ -356,7 +360,12 @@ class MAMEDevice(ShowBase):
             model.reparentTo(container)
         else:
             model.reparentTo(parent)
-        model.setColor(color)
+
+        if texture:
+            tex_node = loader.loadTexture(texture)
+            model.setTexture(tex_node, 1)
+        else:
+            model.setColor(color)
         model.setPosHpr(position[0], position[1], position[2], hpr[0], hpr[1], hpr[2])
         model.setScale(float(scale))
 
