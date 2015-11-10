@@ -26,7 +26,8 @@ from xml.dom.minidom import parse
 import xml.dom.minidom
 
 class MotionControl():
-    def __init__(self, element, _type, _from, _to, _min, _max, original_pos, original_hpr):
+    def __init__(self, signal, element, _type, _from, _to, _min, _max, original_pos, original_hpr):
+        self.signal=signal
         self.element=element
         self._type=_type
         self._from=_from
@@ -133,7 +134,7 @@ class MAMEDevice(ShowBase):
         self.light_elements = {}
         self.stroboscopic_lights = []
         self.nodes_by_id = {}
-        self.motion = {}
+        self.motion = []
         IPC_CHANNEL = "/tmp/sdlmame_out"
         if os.path.isfile(IPC_CHANNEL):
             os.remove(IPC_CHANNEL)
@@ -257,14 +258,14 @@ class MAMEDevice(ShowBase):
                                      'type': _type})
 
             elif element.tagName == 'motion':
-                id = self._getValue(element, 'id', None)
+                signal = self._getValue(element, 'signal', None)
                 target = self._getValue(element, 'target', None)
                 _type = self._getValue(element, 'type', None)
                 _min = float(self._getValue(element, 'min', None))
                 _max = float(self._getValue(element, 'max', None))
                 _from = self._getVector(element, 'from', None)
                 _to = self._getVector(element, 'to', None)
-                newNode = self.setupMotion(id=id, target=target, _type=_type,
+                newNode = self.setupMotion(signal=signal, target=target, _type=_type,
                                            _min=_min, _max=_max,
                                            _from=_from, _to=_to)
 
@@ -396,7 +397,7 @@ class MAMEDevice(ShowBase):
             self.nodes_by_id[id] = light
         return light
 
-    def setupMotion(self, id, target, _type,
+    def setupMotion(self, signal, target, _type,
                           _from, _to, _min=0.0, _max=1.0):
         assert(not type in ['linear', 'angular'])
         assert(target != None)
@@ -404,7 +405,8 @@ class MAMEDevice(ShowBase):
         assert(_to != None)
 
         element = self.nodes_by_id[target]
-        self.motion[id] = MotionControl(element, _type, _from, _to, _min, _max, element.getPos(), element.getHpr())
+        m = MotionControl(signal, element, _type, _from, _to, _min, _max, element.getPos(), element.getHpr())
+        self.motion.append(m)
 
     def setupCamera(self, index, time=0):
         cam = self.cameras[index]
@@ -424,9 +426,8 @@ class MAMEDevice(ShowBase):
         self.camera.lookAt(target, LPoint3f(offs[0], offs[1], offs[2]))
 
     def manual_rotation(self, delta):
-        keys = self.motion.keys()
-        if len(keys) > 0:
-            m = self.motion[keys[0]]
+        if len(self.motion) > 0:
+            m = self.motion[0]
             m.move(delta)
 
     def toggleAllLights(self):
@@ -455,14 +456,16 @@ class MAMEDevice(ShowBase):
             except ValueError:
                 return Task.cont
 
-            if name in self.motion.keys():
-                self.motion[name].setValue(state)
-            elif name in self.light_elements.keys():
+            if name in self.light_elements.keys():
                 light = self.light_elements[name]
                 if state == '1':
                     render.setLight(light)
                 else:
                     render.clearLight(light)
+            else:
+                for m in self.motion:
+                    if m.signal == name:
+                        m.setValue(state)
 
     def update_stroboscopic_lights(self, taskid):
         for light_name in self.stroboscopic_lights:
@@ -480,8 +483,8 @@ class MAMEDevice(ShowBase):
         return Task.cont
 
     def update_motion(self, task):
-        for k in self.motion.keys():
-            self.motion[k].update()
+        for m in self.motion:
+            m.update()
         return Task.cont
 
     def update_camera(self, task):

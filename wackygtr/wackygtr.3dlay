@@ -49,19 +49,19 @@
         <camera id="alligators camera" position="10, 0, 12" lookat="allgators" lookat_offset="0, 0, 2" type='still' fov="40"/>
         <camera id="scorepanel camera" position="10, 0, 5" lookat="scorepanel" lookat_offset="0, 0, 5" type='still' fov="60"/>
         
-        <motion id="alligator0" target="gator0" type="linear"
-        min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />
+        <motion signal="alligator0" target="gator0" type="linear"
+                min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />
 
-        <motion id="alligator1" target="gator1" type="linear"
-        min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />
+        <motion signal="alligator1" target="gator1" type="linear"
+                min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />
 
-        <motion id="alligator2" target="gator2" type="linear"
-        min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />
+        <motion signal="alligator2" target="gator2" type="linear"
+                min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />
 
-        <motion id="alligator3" target="gator3" type="linear"
-        min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />
+        <motion signal="alligator3" target="gator3" type="linear"
+                min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />
 
-        <motion id="alligator4" target="gator4" type="linear"
-        min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />
+        <motion signal="alligator4" target="gator4" type="linear"
+                min="0" max="5" from="-1, 0, 0" to="0, 0, 0" />
     </group>
 </mame3dlayout>

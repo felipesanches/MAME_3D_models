@@ -1,0 +1,32 @@
+<mame3dlayout id="newufo" name="SEGA New UFO Catcher" >
+    <group id="scene_placement" position="0, 60, -10">
+        <light id="light_1" position="0, -40, 10" color="0.7, 0.7, 1, 1" />
+        <light id="light_2" position="20, -20, 10" color="0.7, 1, 0.7, 1" />
+        <light id="light_3" position="-20, -20, 10" color="1, 0.7, 0.7, 1" />
+
+        <group id="claw_player_1" >
+            <model name="claw_white_abs" pos="0,0,10" color="1, 1, 0.95, 1" />
+            <model id="claw_p1_left" pos="0,0,10" name="claw_transparent_acrylic" color="1, 1, 0.95, 0.8" />
+            <model id="claw_p1_right" pos="0,0,10" name="claw_transparent_acrylic" color="1, 1, 0.95, 0.8" hpr="180,0,0" />
+            <camera id="player 1: claw view" position="-2, -3, -1" lookat="claw_p1_left" lookat_offset="0, 0, -1" fov="100"/>
+        </group>
+
+        <group id="static" hpr="200, 0, 0">
+        </group>
+
+        <camera id="observer" position="0, -40, 12" lookat="static" lookat_offset="0, 0, 6" fov="50"/>
+
+        <motion signal="counter3"
+                target="claw_p1_right"
+                type="angular"
+                min="0" max="100"
+                from="0, 0, 0" to="0, 0, -20" />
+
+        <motion signal="counter3"
+                target="claw_p1_left"
+                type="angular"
+                min="0" max="100"
+                from="0, 0, 0" to="0, 0, -20" />
+
+    </group>
+</mame3dlayout>

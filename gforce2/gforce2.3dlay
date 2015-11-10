@@ -23,7 +23,7 @@
              motor movements in the MAME driver for the
              Galaxy Force 2 Super Deluxe cabinet)
         -->
-        <motion id="bank_motor_position"
+        <motion signal="bank_motor_position"
                 target="moving_cabinet"
                 type="angular"
                 min="1" max="7"
