@@ -1,7 +1,10 @@
 STL2EGG = ../tools/stl2egg.py
 
 MATERIALS = egg/newufo_claw_white_abs.egg \
-            egg/newufo_claw_transparent_acrylic.egg
+            egg/newufo_claw_transparent_acrylic.egg \
+            egg/newufo_pink_metal.egg \
+            egg/newufo_metal.egg \
+            egg/newufo_glass.egg
 
 all: $(MATERIALS)
 

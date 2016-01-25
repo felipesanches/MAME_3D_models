@@ -10,9 +10,9 @@ cabinet_width = 2200;
 cabinet_depth = 1000;
 cabinet_height = 2400;
 base_height = 800;
-cabinet_rounding = 50;
+cabinet_rounding = 200;
 
-pink_metal = [1, 0.9, 0.9, 1];
+claw_scale = 0.5; //This is a scaling hack!
 
 //spacing between the cabinet top and the maximum z coordinate of the ufo claw:
 top_margin = 500;
@@ -23,14 +23,26 @@ depth_margin = 300; //to front and to back
 render_all = true;
 render_claw_white_abs = false;
 render_claw_transparent_acrylic = false;
+render_pink_metal = false;
+render_metal = false;
+render_glass = false;
 
 claw_white_abs = [1, 1, 0.95, 1];
 claw_transparent_acrylic = [0.8, 0.8, 0.9, 0.5];
+pink_metal = [1, 0.8, 0.8, 1];
+metal = [0.8, 0.8, 0.8, 1];
+glass = [0.8, 0.8, 1, 0.1];
 
 if (render_claw_transparent_acrylic){
 	material("claw_transparent_acrylic")
+	scale(claw_scale)
 	rotate([0, claw_opening_angle, 0])
 	claw_finger();
+}
+
+if (render_claw_white_abs){
+    scale(claw_scale)
+    claw_body();
 }
 
 module material(name){
@@ -41,21 +53,35 @@ module material(name){
     if (name=="claw_white_abs" && (render_claw_white_abs || render_all))
         color(claw_white_abs)
         child(0);
+
+    if (name=="pink_metal" && (render_pink_metal || render_all))
+        color(pink_metal)
+        child(0);
+
+    if (name=="metal" && (render_metal || render_all))
+        color(metal)
+        child(0);
+
+    if (name=="glass" && (render_glass || render_all))
+        color(glass)
+        child(0);
 }
 
 module claw(){
-	claw_body();
+    if (render_all)
+    scale(claw_scale){
+        color(claw_white_abs)
+        claw_body();
 
-	if (render_all){
-		color(claw_transparent_acrylic){
-			rotate([0, claw_opening_angle, 0])
-			claw_finger();
+        color(claw_transparent_acrylic){
+            rotate([0, claw_opening_angle, 0])
+            claw_finger();
 
-			mirror([1,0])
-			rotate([0, claw_opening_angle, 0])
-			claw_finger();
-		}
-	}
+            mirror([1,0])
+            rotate([0, claw_opening_angle, 0])
+            claw_finger();
+        }
+    }
 }
 
 module claw_finger_2d(border = [0,0]){
@@ -145,19 +171,112 @@ module rounded_square(s, r){
     }
 }
 
+//front panel (fp) parameters:
+fp_elevation = 80;
+fp_width = cabinet_width * 0.6;
+fp_depth = 300;
+fp_rounding = 30;
+
 module cabinet_front_panel(){
-    //TODO: Implement-me!
+    material("pink_metal")
+    difference(){
+        translate([0, - (cabinet_depth + fp_depth)/2 + fp_rounding, fp_elevation])
+        linear_extrude(height=base_height+fp_elevation)
+        rounded_square([fp_width, fp_depth], r=fp_rounding);
+        
+        //prize holes:
+        for (i=[-1,1]){
+            translate([i*fp_width/3, -cabinet_depth/2, 400])
+            cube([300, 600, 300], center=true);
+        }
+    }
+}
+
+module cabinet_base_bottom_cut(){
+    rotate([90,0])
+    linear_extrude(height=2*cabinet_depth, center=true)
+    hull(){
+        square([fp_width, 2*fp_elevation], center=true);
+        square([fp_width + 2*fp_elevation, 0.1], center=true);
+    }
 }
 
 module cabinet_base_body(){
-    //TODO: Implement-me!
-    color(pink_metal)
-    linear_extrude(height=base_height)
-    rounded_square([cabinet_width, cabinet_depth], r=cabinet_rounding);
+    material("pink_metal")
+    difference(){
+        linear_extrude(height=base_height)
+        rounded_square([cabinet_width, cabinet_depth], r=cabinet_rounding);
+
+        cabinet_base_bottom_cut();
+    }
 }
 
+module cabinet_outer_frame_cut(bottom=100, top=400){
+    translate([-cabinet_width, cabinet_rounding - cabinet_depth/2, bottom])
+    cube([2*cabinet_width, cabinet_depth - 2*cabinet_rounding, cabinet_height - base_height - top - bottom]);
+
+    translate([cabinet_rounding - cabinet_width/2, -cabinet_depth, bottom])
+    cube([cabinet_width - 2*cabinet_rounding, 2*cabinet_depth, cabinet_height - base_height - top - bottom]);
+
+    translate([0, 0, -10])
+    linear_extrude(height=cabinet_height - base_height)
+    rounded_square([cabinet_width-20, cabinet_depth-20], r=cabinet_rounding);
+}
+
+module cabinet_outer_frame(){
+    material("metal")
+    render()
+    translate([0, 0, base_height])
+    difference(){
+        linear_extrude(height=cabinet_height - base_height)
+        rounded_square([cabinet_width, cabinet_depth], r=cabinet_rounding);
+
+        cabinet_outer_frame_cut();
+    }
+}
+
+gap = 60;
+glass_thickness = 20;
 module cabinet_windows(){
-    //TODO: Implement-me!
+    material("glass")
+    render()
+    translate([0, 0, base_height])
+    intersection(){
+        linear_extrude(height=cabinet_height - base_height)
+        difference(){
+            square(center=true, [cabinet_width-gap, cabinet_depth-gap]);
+            square(center=true, [cabinet_width-gap-2*glass_thickness, cabinet_depth-gap-2*glass_thickness]);
+        }
+        cabinet_inner_frame_cut();
+    }
+}
+
+module cabinet_inner_frame_cut(bottom=100, top=400){
+    translate([-cabinet_width, cabinet_rounding + gap - cabinet_depth/2, bottom + gap])
+    cube([2*cabinet_width, cabinet_depth - 2*(cabinet_rounding+gap), cabinet_height - base_height - top - bottom - 2*gap]);
+
+    difference(){
+        translate([cabinet_rounding + gap - cabinet_width/2, -cabinet_depth, bottom + gap])
+        cube([cabinet_width - 2*(cabinet_rounding+gap), 2*cabinet_depth, cabinet_height - base_height - top - bottom - 2 * gap]);
+
+        cube(center=true, [gap, cabinet_depth, cabinet_height]);
+    }
+    
+    translate([0, 0, -10])
+    linear_extrude(height=cabinet_height - base_height)
+    rounded_square([cabinet_width-gap-20, cabinet_depth-gap-20], r=cabinet_rounding);
+}
+
+module cabinet_inner_frame(){
+    material("metal")
+    render()
+    translate([0, 0, base_height])
+    difference(){
+        linear_extrude(height=cabinet_height - base_height)
+        rounded_square([cabinet_width-gap, cabinet_depth-gap], r=cabinet_rounding);
+
+        cabinet_inner_frame_cut();
+    }
 }
 
 module cabinet_feet(){
@@ -169,8 +288,7 @@ claw_x = [0, 0];
 claw_y = [0, 0];
 claw_z = [0, 0];
 
-module     claw_mechanisms(){
-    //TODO: Implement-me!
+module claw_mechanisms(){
     for (p = [0, 1]){
         translate([ -cabinet_width/2 * (1-p) + width_margin + claw_x[p] * (cabinet_width/2 - 2*width_margin),
                     -cabinet_depth/2 + depth_margin + claw_y[p] * (cabinet_depth - 2*depth_margin),
@@ -185,8 +303,10 @@ module newufo(){
     translate([0, 0, feet_height]){
         cabinet_front_panel();
         cabinet_base_body();
-        cabinet_windows();
         claw_mechanisms();
+        cabinet_outer_frame();
+        cabinet_inner_frame();
+        cabinet_windows();
     }
 }
 

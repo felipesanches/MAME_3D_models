@@ -1,21 +1,57 @@
 <mame3dlayout id="newufo" name="SEGA New UFO Catcher" >
-    <group id="scene_placement" position="0, 60, -10">
-        <light id="light_1" position="0, -40, 10" color="0.7, 0.7, 1, 1" />
-        <light id="light_2" position="20, -20, 10" color="0.7, 1, 0.7, 1" />
-        <light id="light_3" position="-20, -20, 10" color="1, 0.7, 0.7, 1" />
+    <group id="scene_placement" position="0, 60, -10" hpr="-40, 0, 0">
+        <light id="light_1" position="0, -40, 10" color="0.7, 0.7, 1, 0.7" />
+        <light id="light_2" position="20, 20, 10" color="0.7, 1, 0.7, 0.7" />
+        <light id="light_3" position="-20, 20, 10" color="1, 0.7, 0.7, 0.7" />
 
-        <group id="claw_player_1" >
-            <model name="claw_white_abs" pos="0,0,10" color="1, 1, 0.95, 1" />
-            <model id="claw_p1_left" pos="0,0,10" name="claw_transparent_acrylic" color="1, 1, 0.95, 0.8" />
-            <model id="claw_p1_right" pos="0,0,10" name="claw_transparent_acrylic" color="1, 1, 0.95, 0.8" hpr="180,0,0" />
-            <camera id="player 1: claw view" position="-2, -3, -1" lookat="claw_p1_left" lookat_offset="0, 0, -1" fov="100"/>
+        <group id="y_car_1" position="-11, 0, 5">
+            <group id="x_car_1">
+                <group id="claw_player_1" >
+                    <model name="claw_white_abs" pos="0,0,10" color="1, 1, 0.95, 1" />
+                    <model id="claw_p1_left" pos="0,0,10" name="claw_transparent_acrylic" color="1, 1, 0.95, 0.8" />
+                    <model id="claw_p1_right" pos="0,0,10" name="claw_transparent_acrylic" color="1, 1, 0.95, 0.8" hpr="180,0,0" />
+                    <camera id="player 1: claw view" position="-2, -3, -1" lookat="claw_p1_left" lookat_offset="0, 0, -1" fov="100"/>
+                </group>
+            </group>
         </group>
 
-        <group id="static" hpr="200, 0, 0">
+        <group id="y_car_2" position="0, 0, 5">
+            <group id="x_car_2">
+                <group id="claw_player_2" >
+                    <model name="claw_white_abs" pos="0,0,10" color="1, 1, 0.95, 1" />
+                    <model id="claw_p2_left" pos="0,0,10" name="claw_transparent_acrylic" color="1, 1, 0.95, 0.8" />
+                    <model id="claw_p2_right" pos="0,0,10" name="claw_transparent_acrylic" color="1, 1, 0.95, 0.8" hpr="180,0,0" />
+                    <camera id="player 2: claw view" position="2, -3, -1" lookat="claw_p2_left" lookat_offset="0, 0, -1" fov="100"/>
+                </group>
+            </group>
         </group>
 
-        <camera id="observer" position="0, -40, 12" lookat="static" lookat_offset="0, 0, 6" fov="50"/>
+        <group id="static">
+            <model name="pink_metal" color="1, 0.8, 0.8, 1" metalic="true" />
+            <model name="metal" color="0.4, 0.4, 0.5, 1" metalic="true" />
+            <!--<model name="glass" color="0.8, 0.8, 1, 0.1" />-->
+        </group>
 
+        <camera id="observer" position="-8, -10, 7" lookat="static" lookat_offset="0, 0, 6" fov="90"/>
+
+        <motion signal="counter0"
+                target="y_car_1"
+                type="linear"
+                min="0" max="100"
+                from="0, 0, 0" to="0, 6, 0" />
+
+        <motion signal="counter1"
+                target="x_car_1"
+                type="linear"
+                min="0" max="100"
+                from="8, 0, 0" to="0, 0, 0" />
+        
+        <motion signal="counter2"
+                target="claw_player_1"
+                type="linear"
+                min="0" max="100"
+                from="0, 0, 10" to="0, 0, 5" />
+        
         <motion signal="counter3"
                 target="claw_p1_right"
                 type="angular"
@@ -24,6 +60,36 @@
 
         <motion signal="counter3"
                 target="claw_p1_left"
+                type="angular"
+                min="0" max="100"
+                from="0, 0, 0" to="0, 0, -20" />
+        
+        <motion signal="counter4"
+                target="y_car_2"
+                type="linear"
+                min="0" max="100"
+                from="0, 0, 0" to="0, 6, 0" />
+
+        <motion signal="counter5"
+                target="x_car_2"
+                type="linear"
+                min="0" max="100"
+                from="8, 0, 0" to="0, 0, 0" />
+        
+        <motion signal="counter6"
+                target="claw_player_2"
+                type="linear"
+                min="0" max="100"
+                from="0, 0, 10" to="0, 0, 5" />
+        
+        <motion signal="counter7"
+                target="claw_p2_right"
+                type="angular"
+                min="0" max="100"
+                from="0, 0, 0" to="0, 0, -20" />
+
+        <motion signal="counter7"
+                target="claw_p2_left"
                 type="angular"
                 min="0" max="100"
                 from="0, 0, 0" to="0, 0, -20" />
