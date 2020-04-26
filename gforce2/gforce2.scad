@@ -1,5 +1,5 @@
-arcs_longitudinal_detail_level = 100;
-arcs_circular_detail_level = 12;
+arcs_longitudinal_detail_level = 200;
+arcs_circular_detail_level = 40;
 render_all = true;
 render_glass = false;
 render_dark_black_metal = false;
@@ -309,21 +309,11 @@ module CRT_glass(inches){
 	}
 }
 
-module pie_slice(radius, angle, step) {
-	for(theta = [0:step:angle-step]) {
-		linear_extrude(height = radius*2, center=true)
-		polygon(points = [[0,0], [radius * cos(theta+step), radius * sin(theta+step)], [radius * cos(theta), radius * sin(theta)]]);
-	}
-}
-
 module partial_rotate_extrude(radius, start, end) {
-	intersection () {
-		rotate_extrude()
+	rotate(start){
+		rotate_extrude(angle=end-start)
 		translate([radius,0,0])
 		child(0);
-
-		rotate(start)
-		pie_slice(radius*2, end-start, (end-start)/8);
 	}
 }
 
