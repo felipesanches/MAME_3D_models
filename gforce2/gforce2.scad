@@ -536,16 +536,16 @@ module sdeluxe_base(){
 		    //This is not strictly necessary.
             //I am removing this portion of the base only
             //for aestethical purposes (to make the floor visible
-            //though the grid
+            //through the grid
 			difference(){
-				translate([0,0,-1])
+				translate([0,0,-50])
 				rotate(360/16)
-				cylinder(r=R-10, h=base_thickness, $fn=8);
+				cylinder(r=R-50, h=base_thickness, $fn=8);
 
-				translate([0, 1.6*R, -1])
+				translate([0, 1.6*R, -50])
 				scale([0.5 + 0.01, 1 + 0.01])
 				rotate(360/16)
-				cylinder($fn=8, r=R+1, h=base_thickness);
+				cylinder($fn=8, r=R+50, h=base_thickness);
 			}
 		}
 
