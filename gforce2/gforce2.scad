@@ -268,11 +268,27 @@ module borders(){
 	}
 }
 
+use <gforce2_CRT.scad>;
+
+module CRT_box(){
+    material("dark black metal")
+    //TODO: review scale / units for these 3d models
+    translate([0,0,-500])
+    scale(5)
+    render(){
+        caixa();
+        LCD();
+    }
+}
+
 module CRT(){
 	translate([R*0.4,0,base_thickness + R*0.7])
 	rotate(-90)
 	rotate([90-10, 0])
-	CRT_glass(36);
+	{
+        CRT_box();
+        CRT_glass(36);
+    }
 }
 
 module coinbox(){
